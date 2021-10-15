@@ -76,40 +76,44 @@ const CoursesCalendar = ({ gymId, userId }) => {
     setDaysOfTheMonth(fillCalendarDays(monthSelection.key));
   };
 
+  const monthRadioSelector = (
+  <>
+    <div className="calendar-header">
+      <h1>
+        {selectedMonth.text}
+        <button>▾</button>
+      </h1>
+      <p>2021</p>
+    </div>
+    <div>
+      {months.map((month, i) => (
+        <span key={`key-${month.key}`}>
+          <input
+            type="radio"
+            value={month.key}
+            name="gender"
+            checked={month.key === selectedMonth.key}
+            onChange={() => onChangeMonth(month)}
+          />
+          {`${month.text} `}
+        </span>
+      ))}
+    </div>
+  </>)
+
   return (
     <div className="calendar-container">
-      <div className="calendar-header">
-        <h1>
-          {selectedMonth.text}
-          <button>▾</button>
-        </h1>
-        <p>2021</p>
-      </div>
-      <div>
-        {months.map((month) => (
-          <>
-            <input
-              type="radio"
-              value={month.key}
-              key={month.key}
-              name="gender"
-              checked={month.key === selectedMonth.key}
-              onClick={() => onChangeMonth(month)}
-            />
-            {`${month.text} `}
-          </>
-        ))}
-      </div>
+      {monthRadioSelector}
       <div className="calendar">
         {daysOfTheWeek.map((dayOfTheWeek, i) => (
-          <span key={i} className="day-name">
+          <span key={`key-${i}`} className="day-name">
             {dayOfTheWeek}
           </span>
         ))}
 
         {daysOfTheMonth.map((dayOfTheMonth, i) => (
           <section
-            key={i}
+            key={`key-${i}`}
             className={dayOfTheMonth.class}
           >
             <div>{dayOfTheMonth.dayNumber}</div>
