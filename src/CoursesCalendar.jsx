@@ -34,11 +34,15 @@ const fillCalendarDays = (selectedMonthIndex) => {
     firstDayOfTheMonthWeekIndex === 0 ? 6 : firstDayOfTheMonthWeekIndex - 1 // Sunday is 0 Saturday is 6
   )
     .fill(0)
-    .map((previousMonthDisabledDay, i) => ({
-      dayNumber: months[selectedMonthIndex - 1].daysInMonth - i,
-      class: "day day--disabled",
-      month: selectedMonthIndex
-    }));
+    .map((previousMonthDisabledDay, i) => {
+      const previousMonth = selectedMonthIndex > 0 ? months[selectedMonthIndex - 1] : months[11]; // if current month is Jan previous month is Dec
+
+      return {
+        dayNumber: previousMonth.daysInMonth - i,
+        class: "day day--disabled",
+        month: selectedMonthIndex
+      }
+    });
 
   let lastDayOfTheMonthDate = `${selectedMonthIndex + 1} ${selectedMonthItem.daysInMonth} 2021`;
   let lastDayOfTheMonthWeekIndex = new Date(lastDayOfTheMonthDate).getDay();
