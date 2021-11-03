@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import './coursesCalendar.css';
+import React, { useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 
 const months = [
   { key: 0, daysInMonth: 31, value: 1, text: "January" },
@@ -77,60 +79,90 @@ const CoursesCalendar = ({ gymId, userId }) => {
   };
 
   const monthRadioSelector = (
-  <>
-    <div className="calendar-header">
-      <h1>
-        {selectedMonth.text}
-        <button>▾</button>
-      </h1>
-      <p>2021</p>
-    </div>
-    <div>
-      {months.map((month, i) => (
-        <span key={`key-${month.key}`}>
-          <input
-            type="radio"
-            value={month.key}
-            name="gender"
-            checked={month.key === selectedMonth.key}
-            onChange={() => onChangeMonth(month)}
-          />
-          {`${month.text} `}
-        </span>
-      ))}
-    </div>
-  </>)
-
-  return (
-    <div className="calendar-container">
-      {monthRadioSelector}
-      <div className="calendar">
-        {daysOfTheWeek.map((dayOfTheWeek, i) => (
-          <span key={`key-${i}`} className="day-name">
-            {dayOfTheWeek}
+    <>
+      <div className="calendar-header">
+        <h1>
+          {selectedMonth.text}
+          <button>▾</button>
+        </h1>
+        <p>2021</p>
+      </div>
+      <div>
+        {months.map((month, i) => (
+          <span key={`key-${month.key}`}>
+            <input
+              type="radio"
+              value={month.key}
+              name="gender"
+              checked={month.key === selectedMonth.key}
+              onChange={() => onChangeMonth(month)}
+            />
+            {`${month.text} `}
           </span>
         ))}
-
-        {daysOfTheMonth.map((dayOfTheMonth, i) => (
-          <section
-            key={`key-${i}`}
-            className={dayOfTheMonth.class}
-          >
-            <div>{dayOfTheMonth.dayNumber}</div>
-          </section>
-        ))}
-        <section className="task task--warning">Projects</section>
-        <section className="task task--danger">Design Sprint</section>
-        <section className="task task--primary">
-          Product Checkup 1
-          <div className="task__detail">
-            <h2>Product Checkup 1</h2>
-            <p>15-17th November</p>
-          </div>
-        </section>
-        <section className="task task--info">Product Checkup 2</section>
       </div>
-    </div>
+    </>)
+
+  const daysOfTheWeekIndicators = daysOfTheWeek.map((dayOfTheWeek, i) => (
+    <span key={`key-${i}`} className="day-name">
+      {dayOfTheWeek}
+    </span>
+  ))
+
+  const allEvents = [
+    {id: 'warning', content: 'Projects', className: 'task task--warning'},
+    {id: 'danger', content: 'Design Sprint', className: 'task task--danger'},
+    {id: 'primary', content: 'Product Checkup 1', className: 'task task--primary'},
+  ]
+
+  const onDragEnd = (result) => {
+    console.log('drag end', result)
+    if (!result.destination) {
+      return;
+    }
+  }
+
+  const eventsComponent = allEvents.map((event, index) => (
+    <Draggable key={`key-${index}`} draggableId={event.id} index={index}>
+      {(provided, snapshot) => (
+        <section
+          className={event.className}
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          {event.content}
+        </section>
+      )}
+    </Draggable>
+  ))
+
+  const dayCells = daysOfTheMonth.map((dayOfTheMonth, i) => (
+    <section
+      key={`key-${i}`}
+      className={dayOfTheMonth.class}
+    >
+      <div>{dayOfTheMonth.dayNumber}</div>
+    </section>
+  ))
+
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
+      <Droppable droppableId={`droppable-day`}>
+        {(provided) => (
+          <div className="calendar-container" {...provided.droppableProps} ref={provided.innerRef}>
+
+            {monthRadioSelector}
+
+            <div className="calendar">
+              {daysOfTheWeekIndicators}
+              {dayCells}
+              {eventsComponent}
+            </div>
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 };
 
