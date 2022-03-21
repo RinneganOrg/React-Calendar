@@ -17,19 +17,37 @@ const months = [
   { key: 11, daysInMonth: 31, value: 12, text: "December" }
 ];
 const daysOfTheWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const allEvents = [
+  {id: 'project', content: 'Projects', className: 'task task--warning'},
+  {id: 'design-sprint', content: 'Design Sprint', className: 'task task--danger'},
+  {id: 'product-checkup', content: 'Product Checkup 1', className: 'task task--primary'},
+]
 
+/**
+ * Will make an array containing last days of previous month, all days of current month and first days of next month
+ * depending on when does the first/last day of current month occur during week 
+ * (if 1 is Monday => no previous month days, 31 is Sunday => no next month days)
+ * @param {Number} selectedMonthIndex 
+ * @returns 
+ */
 const fillCalendarDays = (selectedMonthIndex) => {
   let selectedMonthItem = months[selectedMonthIndex];
 
-  let selectedMonthDays = Array(selectedMonthItem.daysInMonth)
+  const selectedMonthDays1 = Array(selectedMonthItem.daysInMonth)
     .fill(0)
     .map((day, i) => ({
       dayNumber: i + 1,
       class: "day",
-      month: selectedMonthIndex + 1
-    }));
+      month: selectedMonthIndex + 1,
+      events: []
+    }))
 
-  let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 2021`;
+    const [day1, day2, ...rest] = selectedMonthDays1;
+    const selectedMonthDays2 = {...day1, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 2))};
+    const selectedMonthDays3 = {...day2, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 2))};
+    const selectedMonthDays = [selectedMonthDays2, selectedMonthDays3, ...rest];
+
+  let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 2022`;
   let firstDayOfTheMonthWeekIndex = new Date(firstDayOfTheMonthDate).getDay();
 
   const previousMonthDisabledDays = Array(
@@ -42,11 +60,12 @@ const fillCalendarDays = (selectedMonthIndex) => {
       return {
         dayNumber: previousMonth.daysInMonth - i,
         class: "day day--disabled",
-        month: selectedMonthIndex
+        month: selectedMonthIndex,
+        events: []
       }
     });
 
-  let lastDayOfTheMonthDate = `${selectedMonthIndex + 1} ${selectedMonthItem.daysInMonth} 2021`;
+  let lastDayOfTheMonthDate = `${selectedMonthIndex + 1} ${selectedMonthItem.daysInMonth} 2022`;
   let lastDayOfTheMonthWeekIndex = new Date(lastDayOfTheMonthDate).getDay();
 
   let nextMonthDisabledDays = Array(7 - lastDayOfTheMonthWeekIndex)
@@ -54,7 +73,8 @@ const fillCalendarDays = (selectedMonthIndex) => {
     .map((nextMonthDisabledDay, i) => ({
       dayNumber: i + 1,
       class: "day day--disabled",
-      month: selectedMonthIndex + 2
+      month: selectedMonthIndex + 2,
+      events: []
     }));
 
   const result = [
@@ -70,7 +90,7 @@ const CoursesCalendar = ({ gymId, userId }) => {
     months[new Date().getMonth()]
   );
   const [daysOfTheMonth, setDaysOfTheMonth] = useState(
-    [fillCalendarDays(new Date().getMonth())]
+    fillCalendarDays(new Date().getMonth())
   );
 
   const onChangeMonth = (monthSelection) => {
@@ -85,7 +105,7 @@ const CoursesCalendar = ({ gymId, userId }) => {
           {selectedMonth.text}
           <button>▾</button>
         </h1>
-        <p>2021</p>
+        <p>2022</p>
       </div>
       <div>
         {months.map((month, i) => (
@@ -102,66 +122,71 @@ const CoursesCalendar = ({ gymId, userId }) => {
         ))}
       </div>
     </>)
-
+  /**
+   * Week days names ex: Monday etc
+   */
   const daysOfTheWeekIndicators = daysOfTheWeek.map((dayOfTheWeek, i) => (
     <span key={`key-${i}`} className="day-name">
       {dayOfTheWeek}
     </span>
   ))
 
-  const allEvents = [
-    {id: 'warning', content: 'Projects', className: 'task task--warning'},
-    {id: 'danger', content: 'Design Sprint', className: 'task task--danger'},
-    {id: 'primary', content: 'Product Checkup 1', className: 'task task--primary'},
-  ]
-
   const onDragEnd = (result) => {
-    console.log('drag end', result)
-    if (!result.destination) {
+    if (!result.destination || result.destination === result.source) {
       return;
     }
+
+    const day5 = daysOfTheMonth[4];
+    const day5Events = day5.events;
+    const newDay5Events = [ ...day5Events, daysOfTheMonth[1].events[0] ];
+    const newDay5 = { ...day5, events: newDay5Events };
+    const resultNew = [ ...daysOfTheMonth.slice(0,4), newDay5, ...daysOfTheMonth.slice(5) ];
+    console.log({ resultNew });
+    setDaysOfTheMonth(resultNew);
   }
 
-  const eventsComponent = allEvents.map((event, index) => (
-    <Draggable key={`key-${index}`} draggableId={event.id} index={index}>
-      {(provided, snapshot) => (
+  const dayCells = daysOfTheMonth.map((dayOfTheMonth, dayIndex) => {
+    console.log(dayOfTheMonth)
+    return (
+    <Droppable droppableId={`${dayIndex}`} key={`key-${dayIndex}`}>
+      {(provided) => (
         <section
-          className={event.className}
+          className={dayOfTheMonth.class}
+          {...provided.droppableProps}
           ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
         >
-          {event.content}
+          <div>
+            {dayOfTheMonth.dayNumber}
+            {provided.placeholder}
+            {dayOfTheMonth.events.map((event, eventIndex) => (
+              <Draggable key={`key-${eventIndex}`} draggableId={`day-${dayOfTheMonth.dayNumber}-${event.id}`} index={eventIndex}>
+                {(provided, snapshot) => (
+                  <section
+                    className={event.className}
+                    ref={provided.innerRef}
+                    {...provided.draggableProps}
+                    {...provided.dragHandleProps}
+                  >
+                    {event.content}
+                  </section>
+                )}
+              </Draggable>
+            ))}
+          </div>
         </section>
       )}
-    </Draggable>
-  ))
-
-  const dayCells = daysOfTheMonth.map((dayOfTheMonth, i) => (
-    <section
-      key={`key-${i}`}
-      className={dayOfTheMonth.class}
-    >
-      <div>{dayOfTheMonth.dayNumber}</div>
-    </section>
-  ))
+    </Droppable>
+  )})
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <Droppable droppableId={`droppable-day`}>
-        {(provided) => (
-          <div className="calendar-container" {...provided.droppableProps} ref={provided.innerRef}>
-
-            {monthRadioSelector}
-
-            <div className="calendar">
-              {daysOfTheWeekIndicators}
-              {dayCells}
-              {eventsComponent}
-            </div>
-          </div>
-        )}
-      </Droppable>
+      <div className="calendar-container">
+        {monthRadioSelector}
+        <div className="calendar">
+          {daysOfTheWeekIndicators}
+          {dayCells}
+        </div>
+      </div>
     </DragDropContext>
   );
 };
