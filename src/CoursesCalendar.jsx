@@ -43,8 +43,8 @@ const fillCalendarDays = (selectedMonthIndex) => {
     }))
 
     const [day1, day2, ...rest] = selectedMonthDays1;
-    const selectedMonthDays2 = {...day1, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 2))};
-    const selectedMonthDays3 = {...day2, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 2))};
+    const selectedMonthDays2 = {...day1, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 3))};
+    const selectedMonthDays3 = {...day2, events: allEvents.slice(0, 1 + Math.floor(Math.random() * 3))};
     const selectedMonthDays = [selectedMonthDays2, selectedMonthDays3, ...rest];
 
   let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 2022`;
@@ -130,23 +130,54 @@ const CoursesCalendar = ({ gymId, userId }) => {
       {dayOfTheWeek}
     </span>
   ))
+  /**
+   * 
+   * [{name: 1, events: [a,b]}, {name: 2, events: [*a,b]}, {name: 3, events: [a,b]}, {name: 4, events: [a,*a,b]}, {name: 5, events: [a,b]}]
+   * @param {Object} dragResult
+   * @param {Object} dragResult.destination
+   * @param {String} dragResult.destination.droppableId
+   * @param {Number} dragResult.destination.index
+   * @param {Object} dragResult.source
+   * @param {String} dragResult.source.droppableId
+   * @param {Number} dragResult.source.index
+   * @returns
+   */
+  const onDragEnd = (dragResult) => {
+    const { source, destination } = dragResult;
 
-  const onDragEnd = (result) => {
-    if (!result.destination || result.destination === result.source) {
+    if (!destination || destination?.droppableId === source?.droppableId) {
       return;
     }
 
-    const day5 = daysOfTheMonth[4];
-    const day5Events = day5.events;
-    const newDay5Events = [ ...day5Events, daysOfTheMonth[1].events[0] ];
-    const newDay5 = { ...day5, events: newDay5Events };
-    const resultNew = [ ...daysOfTheMonth.slice(0,4), newDay5, ...daysOfTheMonth.slice(5) ];
-    console.log({ resultNew });
-    setDaysOfTheMonth(resultNew);
+    const allDaysCurrentMonth = daysOfTheMonth.slice();
+  
+    const sourceDay = allDaysCurrentMonth[source.droppableId];
+    const eventToMove = sourceDay.events[source.index];
+    const updatedSourceEvents = [
+      ...sourceDay.events.slice(0, source.index),
+      ...sourceDay.events.slice(source.index+1)
+    ];
+
+    const destinationDay = allDaysCurrentMonth[destination.droppableId];
+    const updatedDestinationEvents = [
+      ...destinationDay.events.slice(0, destination.index),
+      eventToMove,
+      ...destinationDay.events.slice(destination.index)
+    ];
+
+    allDaysCurrentMonth[source.droppableId] = {
+      ...sourceDay,
+      events: updatedSourceEvents
+    };
+    allDaysCurrentMonth[destination.droppableId] = {
+      ...destinationDay,
+      events: updatedDestinationEvents
+    };
+
+    setDaysOfTheMonth(allDaysCurrentMonth);
   }
 
   const dayCells = daysOfTheMonth.map((dayOfTheMonth, dayIndex) => {
-    console.log(dayOfTheMonth)
     return (
     <Droppable droppableId={`${dayIndex}`} key={`key-${dayIndex}`}>
       {(provided) => (
