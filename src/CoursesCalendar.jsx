@@ -131,8 +131,11 @@ const CoursesCalendar = ({ gymId, userId }) => {
     </span>
   ))
   /**
-   * 
-   * [{name: 1, events: [a,b]}, {name: 2, events: [*a,b]}, {name: 3, events: [a,b]}, {name: 4, events: [a,*a,b]}, {name: 5, events: [a,b]}]
+   * Move the event to different destination at selected position or keep it in place
+   * (will not reorder if source is the same as destination)
+   * ex: source has droppableId: 1 and index: 0, destination has droppableId: 3 and index: 1
+   * [{name: 1, events: [a,b]}, {name: 2, events: [*a,b]}, {name: 3, events: [a,b]},
+   * {name: 4, events: [a,*a,b]}, {name: 5, events: [a,b]}]
    * @param {Object} dragResult
    * @param {Object} dragResult.destination
    * @param {String} dragResult.destination.droppableId
@@ -145,12 +148,15 @@ const CoursesCalendar = ({ gymId, userId }) => {
   const onDragEnd = (dragResult) => {
     const { source, destination } = dragResult;
 
+    // if destination is not droppable or source is the same as destination, it will be kept in place
     if (!destination || destination?.droppableId === source?.droppableId) {
       return;
     }
 
+    // make copy to make it safe to mutate, the source won't be changed
     const allDaysCurrentMonth = daysOfTheMonth.slice();
   
+    //remove dragged event from source
     const sourceDay = allDaysCurrentMonth[source.droppableId];
     const eventToMove = sourceDay.events[source.index];
     const updatedSourceEvents = [
@@ -158,6 +164,7 @@ const CoursesCalendar = ({ gymId, userId }) => {
       ...sourceDay.events.slice(source.index+1)
     ];
 
+    // add dropped event to destination at desired position
     const destinationDay = allDaysCurrentMonth[destination.droppableId];
     const updatedDestinationEvents = [
       ...destinationDay.events.slice(0, destination.index),
@@ -165,10 +172,13 @@ const CoursesCalendar = ({ gymId, userId }) => {
       ...destinationDay.events.slice(destination.index)
     ];
 
+    // replacing item in array is safe to mutate, 
+    // it won't change the original source
     allDaysCurrentMonth[source.droppableId] = {
       ...sourceDay,
       events: updatedSourceEvents
     };
+
     allDaysCurrentMonth[destination.droppableId] = {
       ...destinationDay,
       events: updatedDestinationEvents
