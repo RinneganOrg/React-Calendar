@@ -26,6 +26,14 @@ const daysOfTheWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
  * @returns
  */
 
+const makeEventsForDay = (previousMonthDisabledDay, events) =>
+  events.filter(
+    (event) =>
+      moment(event.startDate).date() === previousMonthDisabledDay.dayNumber &&
+      moment(event.startDate).month() + 1 === previousMonthDisabledDay.month &&
+      moment(event.startDate).year() === previousMonthDisabledDay.year
+  );
+
 const selectedMonthDaysWithEvents = (
   selectedMonthItem,
   selectedYear,
@@ -34,28 +42,32 @@ const selectedMonthDaysWithEvents = (
 ) => {
   const selectedMonthDays = Array(selectedMonthItem.daysInMonth)
     .fill(0)
-    .map((_, index) => ({
-      year: selectedYear,
-      dayNumber: index + 1,
-      class: "day",
-      month: selectedMonthIndex + 1,
-      events: [],
-    }));
-  return selectedMonthDays.map((selectedMonthDay) => {
-    selectedMonthDay.events = events.filter(
-      (event) =>
-        moment(event.startDate).date() === selectedMonthDay.dayNumber &&
-        moment(event.startDate).month() + 1 === selectedMonthDay.month &&
-        moment(event.startDate).year() === selectedMonthDay.year
-    );
-    return selectedMonthDay;
-  });
+    .map((_, index) => {
+      const year = selectedYear;
+      const month = selectedMonthIndex + 1;
+      const dayNumber = index + 1;
+
+      const result = {
+        year,
+        month,
+        dayNumber,
+        class: "day",
+        events: makeEventsForDay({ year, month, dayNumber }, events),
+      };
+
+      return result;
+    });
+  return selectedMonthDays;
 };
 
-const previousMonthDisabledDays = (selectedMonthIndex, selectedYear) => {
+const previousMonthDisabledDays = (
+  selectedMonthIndex,
+  selectedYear,
+  events
+) => {
   let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 ${selectedYear}`;
   let firstDayOfTheMonthWeekIndex = new Date(firstDayOfTheMonthDate).getDay();
-  return Array(
+  const previousMonthDisabledDays = Array(
     firstDayOfTheMonthWeekIndex === 0 ? 6 : firstDayOfTheMonthWeekIndex - 1 // Sunday is 0 Saturday is 6
   )
     .fill(0)
@@ -63,60 +75,61 @@ const previousMonthDisabledDays = (selectedMonthIndex, selectedYear) => {
       const previousMonth =
         selectedMonthIndex > 0 ? months[selectedMonthIndex - 1] : months[11]; // if current month is Jan previous month is Dec
 
-      return selectedMonthIndex > 0
-        ? {
-            year: selectedYear,
-            dayNumber: previousMonth.daysInMonth - index,
-            class: "day day--disabled",
-            month: selectedMonthIndex,
-            events: [],
-          }
-        : {
-            year: selectedYear - 1,
-            dayNumber: previousMonth.daysInMonth - index,
-            class: "day day--disabled",
-            month: 12,
-            events: [],
-          };
+      const year = selectedMonthIndex > 0 ? selectedYear : selectedYear - 1;
+      const month = selectedMonthIndex > 0 ? selectedMonthIndex : 12;
+      const dayNumber = previousMonth.daysInMonth - index;
+
+      const result = {
+        year,
+        month,
+        events: makeEventsForDay({ dayNumber, year, month }, events),
+        class: "day day--disabled",
+        dayNumber,
+      };
+
+      return result;
     })
     .reverse();
+
+  return previousMonthDisabledDays;
 };
 
 const nextMonthDisabledDays = (
   selectedMonthItem,
   selectedMonthIndex,
-  selectedYear
+  selectedYear,
+  events
 ) => {
   let lastDayOfTheMonthDate = `${selectedMonthIndex + 1} ${
     selectedMonthItem.daysInMonth
   } ${selectedYear}`;
   let lastDayOfTheMonthWeekIndex = new Date(lastDayOfTheMonthDate).getDay();
-  return Array(7 - lastDayOfTheMonthWeekIndex)
+  const nextMonthDisabledDays = Array(7 - lastDayOfTheMonthWeekIndex)
     .fill(0)
-    .map((_, index) =>
-      selectedMonthIndex < 11
-        ? {
-            year: selectedYear,
-            dayNumber: index + 1,
-            class: "day day--disabled",
-            month: selectedMonthIndex + 2,
-            events: [],
-          }
-        : {
-            year: selectedYear + 1,
-            dayNumber: index + 1,
-            class: "day day--disabled",
-            month: 1,
-            events: [],
-          }
-    );
+    .map((_, index) => {
+      const year = selectedMonthIndex < 11 ? selectedYear : selectedYear + 1;
+      const month = selectedMonthIndex < 11 ? selectedMonthIndex + 2 : 1;
+      const dayNumber = index + 1;
+
+      const result = {
+        year,
+        month,
+        dayNumber,
+        class: "day day--disabled",
+        events: makeEventsForDay({ dayNumber, year, month }, events),
+      };
+
+      return result;
+    });
+
+  return nextMonthDisabledDays;
 };
 
 const fillCalendarDays = (selectedMonthIndex, events, selectedYear) => {
   let selectedMonthItem = months[selectedMonthIndex];
 
   const result = [
-    ...previousMonthDisabledDays(selectedMonthIndex, selectedYear),
+    ...previousMonthDisabledDays(selectedMonthIndex, selectedYear, events),
     ...selectedMonthDaysWithEvents(
       selectedMonthItem,
       selectedYear,
@@ -126,16 +139,59 @@ const fillCalendarDays = (selectedMonthIndex, events, selectedYear) => {
     ...nextMonthDisabledDays(
       selectedMonthItem,
       selectedMonthIndex,
-      selectedYear
+      selectedYear,
+      events
     ),
   ];
   return result;
 };
 
-const makeInterval = (year, month, startDay, endDay) => {
+const makeInterval = (
+  startYear,
+  startMonth,
+  startDay,
+  endYear,
+  endMonth,
+  endDay
+) => {
   return {
-    startDate: moment([year, month.key, startDay]),
-    endDate: moment([year, month.key, endDay]),
+    startDate: moment([startYear, startMonth - 1, startDay]),
+    endDate: moment([endYear, endMonth - 1, endDay]),
+  };
+};
+
+const makeIntervalToFetchMonthEvents = (
+  selectedMonth,
+  selectedYear,
+  events
+) => {
+  const {
+    year: yearForPreviousMonth,
+    month: monthForPreviousMonth,
+    dayNumber: dayNumberForPreviousMonth,
+  } = previousMonthDisabledDays(selectedMonth.key, selectedYear, events)[0];
+  const nextDisabledDays = nextMonthDisabledDays(
+    selectedMonth,
+    selectedMonth.key,
+    selectedYear,
+    events
+  );
+  const {
+    year: yearForNextMonth,
+    month: monthForNextMonth,
+    dayNumber: dayNumberForNextMonth,
+  } = nextDisabledDays[nextDisabledDays.length - 1];
+  return {
+    startDate: moment([
+      yearForPreviousMonth,
+      monthForPreviousMonth - 1,
+      dayNumberForPreviousMonth,
+    ]),
+    endDate: moment([
+      yearForNextMonth,
+      monthForNextMonth - 1,
+      dayNumberForNextMonth,
+    ]),
   };
 };
 
@@ -182,12 +238,6 @@ const CoursesCalendar = ({
   makeDefaultEvent,
   editEventData,
 }) => {
-  useEffect(() => {
-    fetchEventsByInterval(
-      makeInterval(selectedYear, selectedMonth, 1, selectedMonth.daysInMonth)
-    );
-  }, []);
-
   const [selectedMonth, setCurrentMonth] = useState(
     months[new Date().getMonth()]
   );
@@ -196,12 +246,19 @@ const CoursesCalendar = ({
     fillCalendarDays(new Date().getMonth(), events, selectedYear)
   );
 
+  useEffect(() => {
+    fetchEventsByInterval(
+      makeIntervalToFetchMonthEvents(selectedMonth, selectedYear, events)
+    );
+  }, []);
+
   const onChangeMonth = (monthSelection, year) => {
     setCurrentMonth(monthSelection);
     fetchEventsByInterval(
-      makeInterval(year, monthSelection, 1, monthSelection.daysInMonth)
+      makeIntervalToFetchMonthEvents(monthSelection, year, events)
     );
   };
+
   const setNextYear = () => {
     const year = selectedYear + 1;
     setSelectedYear(year);
@@ -216,8 +273,10 @@ const CoursesCalendar = ({
     makeDefaultEvent(
       makeInterval(
         selectedYear,
-        selectedMonth,
+        selectedMonth.key,
         dayOfTheMonth.dayNumber,
+        selectedYear,
+        selectedMonth.key,
         dayOfTheMonth.dayNumber
       )
     );
@@ -237,6 +296,11 @@ const CoursesCalendar = ({
       ? onChangeMonth(months[selectedMonth.key + 1], selectedYear)
       : setNextYear();
   };
+  const handleToday = () => {
+    setSelectedYear(new Date().getFullYear());
+    const year = new Date().getFullYear();
+    onChangeMonth(months[new Date().getMonth()], year);
+  };
 
   useEffect(() => {
     setDaysOfTheMonth(
@@ -248,28 +312,27 @@ const CoursesCalendar = ({
     <div className="calendar-header">
       <button
         className="calendar-header-arrow-btn"
-        onClick={(e) => handleChangePreviousMonth(selectedMonth, selectedYear)}
+        onClick={() => handleChangePreviousMonth(selectedMonth, selectedYear)}
       >
         <img src="https://i.imgur.com/2gqThFI.png" alt="left-arrow" />
       </button>
-      <select
-        className="calendar-header-month-selection"
-        name="month-selection"
-        value={selectedMonth.key}
-        onChange={(e) => {
-          onChangeMonth(months[e.target.value], selectedYear);
-        }}
-      >
-        {months.map((month) => (
-          <option
-            className="calendar-header-month-options"
-            value={month.key}
-            key={`key-${month.key}`}
-          >
-            {month.text} {selectedYear}
-          </option>
-        ))}
-      </select>
+
+      <div className="dropdown">
+        <button className="dropbtn">
+          {selectedMonth.text} {selectedYear}
+        </button>
+        <div className="dropdown-content">
+          {months.map((month, index) => (
+            <p
+              key={`key-${index}`}
+              onClick={() => onChangeMonth(months[month.key], selectedYear)}
+              className="dropdown-content-btn"
+            >
+              {month.text} {selectedYear}
+            </p>
+          ))}
+        </div>
+      </div>
 
       <button
         className="calendar-header-arrow-btn"
@@ -278,11 +341,7 @@ const CoursesCalendar = ({
         <img src="https://i.imgur.com/uambqYY.png" alt="right-arrow" />
       </button>
       <button
-        onClick={() => {
-          setSelectedYear(new Date().getFullYear());
-          const year = new Date().getFullYear();
-          onChangeMonth(months[new Date().getMonth()], year);
-        }}
+        onClick={() => handleToday()}
         className="calendar-header-today-btn"
       >
         Today
