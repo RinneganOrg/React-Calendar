@@ -93,9 +93,9 @@
 }
 .dropdown-content p:active {
   background-color: rgb(104, 104, 104);
-  color:white;
+  color: white;
 }
-.dropdown-content-btn:hover{
+.dropdown-content-btn:hover {
   background-color: #f0f0f0;
 }
 .dropdown:hover .dropdown-content {
@@ -124,7 +124,7 @@
   letter-spacing: 1px;
   font-size: 12px;
   box-sizing: border-box;
-  color: #98a0a6;
+  /* color: #98a0a6; */
   position: relative;
 }
 .day--one-day-event {
@@ -183,14 +183,14 @@
 .day-name {
   font-size: 12px;
   text-transform: uppercase;
-  color: #99a1a7;
+  color: #a79999;
   text-align: center;
   border-bottom: 1px solid rgba(166, 168, 179, 0.12);
   line-height: 50px;
   font-weight: 500;
 }
 .day--disabled {
-  color: rgba(152, 160, 166, 0.6);
+  color: rgba(166, 153, 152, 0.6);
   background-color: #ffffff;
   background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23f9f9fa' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E");
 }
@@ -206,7 +206,47 @@
   text-align: left;
   min-height: 20px;
 }
+.task--past-full-day {
+  grid-column: 5 / span 3;
+  grid-row: 2;
+  background: #890b4a73;
+  align-self: center;
+  color: #601038;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task--timed {
+  margin-left: 3px;
+  color: rgb(22, 22, 22);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task--timed::before {
+  content: "";
+  width: 0.6em;
+  height: 0.6em;
+  background-color: #890b4a;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.3em;
+}
+.task--active-full-day {
+  background: #890b4a;
+  border: 0;
+  border-radius: 4px;
+  grid-column: 3 / span 3;
+  grid-row: 4;
+  align-self: end;
+  color: #fff;
+  box-shadow: 0 10px 14px #890b4a69;
+}
 .task--one-day {
+  display: list-item;
+  list-style-position: inside;
+  list-style-type: circle;
   border-radius: 0;
   margin-left: -1px;
 }
@@ -241,6 +281,8 @@
   color: hsl(348, 39%, 37%);
 }
 .task--info {
+  display: list-item;
+  list-style-position: inside;
   border-left-color: #4786ff;
   grid-column: 6 / span 2;
   grid-row: 5;
