@@ -441,8 +441,6 @@ const CoursesCalendar = ({
                       onClick={() => {
                         handleEdit(event.id);
                       }}
-                      // className={event.className}
-                      // className="task task--primary"
                       className={setEventStyle(event)}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
