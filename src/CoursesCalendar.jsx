@@ -155,8 +155,8 @@ const makeInterval = (
   endDay
 ) => {
   return {
-    startDate: moment([startYear, startMonth - 1, startDay]),
-    endDate: moment([endYear, endMonth - 1, endDay]),
+    startDate: moment([startYear, startMonth, startDay]),
+    endDate: moment([endYear, endMonth, endDay]),
   };
 };
 
@@ -269,17 +269,8 @@ const CoursesCalendar = ({
     setSelectedYear(year);
     onChangeMonth(months[11], year);
   };
-  const handleCreate = (selectedYear, selectedMonth, dayOfTheMonth) => {
-    makeDefaultEvent(
-      makeInterval(
-        selectedYear,
-        selectedMonth.key,
-        dayOfTheMonth.dayNumber,
-        selectedYear,
-        selectedMonth.key,
-        dayOfTheMonth.dayNumber
-      )
-    );
+  const handleCreate = (year, month, day) => {
+    makeDefaultEvent(makeInterval(year, month, day, year, month, day));
     handleOpenModal();
   };
   const handleEdit = (eventId) => {
@@ -300,6 +291,20 @@ const CoursesCalendar = ({
     setSelectedYear(new Date().getFullYear());
     const year = new Date().getFullYear();
     onChangeMonth(months[new Date().getMonth()], year);
+  };
+  const setEventStyle = (event) => {
+    // timed event
+    if (
+      event.startHour && event.endHour
+    ) {
+      return "task task--timed";
+    } 
+    // past full day event
+    else if (new Date(event.endDate) < new Date()) {
+      return "task task--past-full-day";
+    }
+    // active full day event
+    return "task task--active-full-day"
   };
 
   useEffect(() => {
@@ -414,9 +419,13 @@ const CoursesCalendar = ({
           >
             <div>
               <div
-                onClick={() =>
-                  handleCreate(selectedYear, selectedMonth, dayOfTheMonth)
-                }
+                onClick={() => {
+                  handleCreate(
+                    dayOfTheMonth.year,
+                    dayOfTheMonth.month-1,
+                    dayOfTheMonth.dayNumber
+                  );
+                }}
               >
                 {dayOfTheMonth.dayNumber}
                 {provided.placeholder}
@@ -427,18 +436,17 @@ const CoursesCalendar = ({
                   draggableId={`day-${dayOfTheMonth.dayNumber}-${event.id}`}
                   index={eventIndex}
                 >
-                  {(provided, snapshot) => (
+                  {(provided) => (
                     <section
                       onClick={() => {
                         handleEdit(event.id);
                       }}
-                      // className={event.className}
-                      className="task task--primary"
+                      className={setEventStyle(event)}
                       ref={provided.innerRef}
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                     >
-                      {event.title}
+                     {event.startHour} {event.title}
                     </section>
                   )}
                 </Draggable>
