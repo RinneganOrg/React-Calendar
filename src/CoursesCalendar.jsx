@@ -436,7 +436,7 @@ const CoursesCalendar = ({
                   draggableId={`day-${dayOfTheMonth.dayNumber}-${event.id}`}
                   index={eventIndex}
                 >
-                  {(provided, snapshot) => (
+                  {(provided) => (
                     <section
                       onClick={() => {
                         handleEdit(event.id);
