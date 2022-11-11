@@ -10,25 +10,34 @@ export const selectedWeekDaysWithEvents = (selectedWeek, events) => {
         0
       ).getDate();
       // TODO simplify
-      const year =
-        selectedWeek.startYear === selectedWeek.endYear
-          ? selectedWeek.startYear
-          : currentMonthNoOfDays < selectedWeek.startDay + (index % 7) &&
-            selectedWeek.endMonth === 1
-          ? selectedWeek.endYear
-          : selectedWeek.startYear;
-      const month =
-        selectedWeek.startMonth === selectedWeek.endMonth
-          ? selectedWeek.startMonth
-          : currentMonthNoOfDays < selectedWeek.startDay + (index % 7)
-          ? selectedWeek.endMonth
-          : selectedWeek.startMonth;
-      const dayNumber =
-        selectedWeek.startMonth === selectedWeek.endMonth
-          ? selectedWeek.startDay + (index % 7)
-          : selectedWeek.startDay + (index % 7) > currentMonthNoOfDays
-          ? (index % 7) - (currentMonthNoOfDays - selectedWeek.startDay)
-          : selectedWeek.startDay + (index % 7);
+
+      const isSameYear = selectedWeek.startYear === selectedWeek.endYear;
+      const isNextYear =
+        currentMonthNoOfDays < selectedWeek.startDay + (index % 7) &&
+        selectedWeek.endMonth === 1;
+
+      const year = isSameYear
+        ? selectedWeek.startYear
+        : isNextYear
+        ? selectedWeek.endYear
+        : selectedWeek.startYear;
+
+      const isSameMonth = selectedWeek.startMonth === selectedWeek.endMonth;
+      const isNextMonth =
+        currentMonthNoOfDays < selectedWeek.startDay + (index % 7);
+
+      const month = isSameMonth
+        ? selectedWeek.startMonth
+        : isNextMonth
+        ? selectedWeek.endMonth
+        : selectedWeek.startMonth;
+      
+      const dayNumber = isSameMonth
+        ? selectedWeek.startDay + (index % 7)
+        : isNextMonth
+        ? (index % 7) - (currentMonthNoOfDays - selectedWeek.startDay)
+        : selectedWeek.startDay + (index % 7);
+
       const hour = Math.trunc(index / 7) - 1;
 
       const result = {
