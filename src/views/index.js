@@ -1,4 +1,4 @@
-import MonthView from "./month/MonthView";
-import WeekView from "./week/WeekView";
+import Month from "./month/MonthView";
+import Week from "./week/WeekView";
 
-export {MonthView, WeekView}
+export {Month, Week}

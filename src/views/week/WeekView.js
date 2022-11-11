@@ -9,7 +9,7 @@ import { makeInterval } from "./makeInterval";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import moment from "moment";
 
-const WeekView = ({
+const Week = ({
   viewNames,
   setSelectedView,
   ModalPopUp,
@@ -240,4 +240,4 @@ const WeekView = ({
   );
 };
 
-export default WeekView;
+export default Week;

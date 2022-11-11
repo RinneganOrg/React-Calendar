@@ -14,4 +14,4 @@ export const MONTHS = [
 ];
 export const DAYS_OF_THE_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 export const VIEWS = ["Year", "Month", "Week", "Day"];
-export const INITIAL_VIEW = "MonthView";
+export const INITIAL_VIEW = "Month";
