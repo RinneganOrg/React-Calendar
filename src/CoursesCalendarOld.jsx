@@ -1,570 +1,841 @@
+import "./coursesCalendar.css";
 import React, { useState, useEffect } from "react";
-// import { Dropdown, Modal, Button, Input, Header, List, Image, Label, Icon, Grid } from 'semantic-ui-react'
-// import moment from 'moment'
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import moment from "moment";
+import { months, daysOfTheWeek, views } from "./constants";
 
-const CoursesCalendar = ({ gymId, userId }) => {
-  const months =
-    [{ key: 0, daysInMonth: 31, value: 1, text: "January" },
-    { key: 1, daysInMonth: 28, value: 2, text: "February" },
-    { key: 2, daysInMonth: 31, value: 3, text: "March" },
-    { key: 3, daysInMonth: 30, value: 4, text: "April" },
-    { key: 4, daysInMonth: 31, value: 5, text: "May" },
-    { key: 5, daysInMonth: 30, value: 6, text: "June" },
-    { key: 6, daysInMonth: 31, value: 7, text: "July" },
-    { key: 7, daysInMonth: 30, value: 8, text: "August" },
-    { key: 8, daysInMonth: 31, value: 9, text: "September" },
-    { key: 9, daysInMonth: 30, value: 10, text: "October" },
-    { key: 10, daysInMonth: 31, value: 11, text: "November" },
-    { key: 11, daysInMonth: 30, value: 12, text: "December" }]
-  const daysOfTheWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-  // const courses2 = useSelector(state =>
-  //   state.courses.courses
-  //     .map(course => ({
-  //       key: course._id,
-  //       value: course._id,
-  //       text: course.name,
-  //       color: course.color
-  //     }))
-  // )
-  // const courses = useSelector(state =>
-  //   state.courses.courses
-  //     .filter(course => course.gymId + '' === gymId)
-  //     .map(course => ({
-  //       key: course._id,
-  //       value: course._id,
-  //       text: course.name,
-  //       color: course.color
-  //     }))
-  // )
-  // const trainers = useSelector(state =>
-  //   state.trainers.trainers
-  //     .map(trainer => ({
-  //       trainerGymId: trainer.gymId,
-  //       trainerId: trainer._id,
-  //       trainerName: trainer.name,
-  //       trainerImage: trainer.image
-  //     }))
-  // )
-  // const trainersToChoose = trainers
-  //   .filter(trainer => trainer.trainerGymId + '' === gymId)
-  //   .map(trainer => ({
-  //     key: trainer.trainerId,
-  //     value: trainer.trainerId,
-  //     text: trainer.trainerName,
-  //     image: { avatar: true, src: trainer.trainerImage },
-  //   }))
+/**
+ * Will make an array containing last days of previous month, all days of current month and first days of next month
+ * depending on when does the first/last day of current month occur during week
+ * (if 1 is Monday => no previous month days, 31 is Sunday => no next month days)
+ * @param {Number} selectedMonthIndex
+ * @returns
+ */
+const makeEventsForDay = (year, month, dayNumber, events) =>
+  events.filter(
+    (event) =>
+      moment(event.startDate).date() === dayNumber &&
+      moment(event.startDate).month() + 1 === month &&
+      moment(event.startDate).year() === year
+  );
 
-  // const activities = useSelector(state => state.activities.activities
-  //   .filter(activity =>
-  //     (gymId && activity.gymId + '' === gymId)
-  //     ||
-  //     (userId && activity.userIds && activity.userIds.includes(userId))))
+const makeEventsForHour = (year, month, dayNumber, hour, events) =>
+  events.filter((event) => {
+    const isCorrectDay = moment(event.startDate).date() === dayNumber;
+    const isCorrectMonth = moment(event.startDate).month() + 1 === month;
+    const isCorrectYear = moment(event.startDate).year() === year;
+    const isCorrectHour =
+      !event.startHour && hour === -1
+        ? true
+        : moment(event.startHour, "HH:mm:ss").hour() === hour;
+    return isCorrectDay && isCorrectMonth && isCorrectYear && isCorrectHour;
+  });
 
-  // const activitiesData = activities.map((activity) => {
-  //   const course = courses2.find(courseItem => courseItem.value === activity.courseId)
-  //   const trainer = trainers.find(trainerItem => trainerItem.trainerId === activity.trainerId)
-  //   return Object.assign({}, activity, { ...course }, { ...trainer })
-  // })
-  // const dispatch = useDispatch()
-  // let auth = useAuth();
+const selectedMonthDaysWithEvents = (
+  selectedMonthItem,
+  selectedYear,
+  selectedMonthIndex,
+  events
+) => {
+  const selectedMonthDays = Array(selectedMonthItem.daysInMonth)
+    .fill(0)
+    .map((_, index) => {
+      const year = selectedYear;
+      const month = selectedMonthIndex + 1;
+      const dayNumber = index + 1;
 
-  const [selectedMonth, setCurrentMonth] = useState(new Date().getMonth() + 1)
-  const [daysOfTheMonth, setDaysOfTheMonth] = useState([])
-  const [selectedDay, setSelectedDay] = useState('')
-  const [selectedActivity, setSelectedActivity] = useState({})
-  const [selectedCourse, setSelectedCourse] = useState()
-  const [maxAttendance, setMaxAttendance] = useState(0)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [selectedTrainer, setSelectedTrainer] = useState()
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [showEditMode, setShowEditMode] = useState(false)
-
-  const changeDisplayModal = (day) => {
-    // if (auth && auth.role === "admin") {
-    //   setSelectedCourse('')
-    //   setSelectedTrainer('')
-    //   setStartDate(`2021-${('0' + day.month).slice(-2)}-${('0' + day.dayNumber).slice(-2)}`)
-    //   setEndDate(`2021-${('0' + day.month).slice(-2)}-${('0' + day.dayNumber).slice(-2)}`)
-    //   setMaxAttendance(0)
-    //   setSelectedActivity({})
-    //   if (day.dayNumber) {
-    //     setSelectedDay(day.dayNumber)
-    //   }
-    //   if (!userId)
-    //     setShowEditModal(!showEditModal)
-    //   setShowEditMode(!showEditMode)
-    // }
-  }
-  const changeDisplayEditModal = (event, activity, dayNumber) => {
-    event.stopPropagation()
-    if (activity) {
-      setSelectedActivity(activity)
-    }
-    if (dayNumber) {
-      setSelectedDay(dayNumber)
-    }
-    setShowEditModal(!showEditModal)
-  }
-  const changeShowEditMode = () => {
-    let startDateOfSelectedActivity = new Date(selectedActivity.startDate)
-    let endDateOfSelectedActivity = new Date(selectedActivity.endDate)
-    setSelectedCourse(selectedActivity.courseId)
-    setSelectedTrainer(selectedActivity.trainerId)
-    setMaxAttendance(selectedActivity.maxAttendance)
-    setStartDate(
-      `${startDateOfSelectedActivity.getFullYear()}-${('0' + (startDateOfSelectedActivity.getMonth() + 1)).slice(-2)}-${('0' + startDateOfSelectedActivity.getDate()).slice(-2)}`
-    )
-    setEndDate(
-      `${endDateOfSelectedActivity.getFullYear()}-${('0' + (endDateOfSelectedActivity.getMonth() + 1)).slice(-2)}-${('0' + endDateOfSelectedActivity.getDate()).slice(-2)}`
-    )
-    setShowEditMode(!showEditMode)
-  }
-  const onAddActivity = () => {
-    // if (maxAttendance >= 0) {
-    //   let activity = {
-    //     gymId: gymId,
-    //     courseId: selectedCourse,
-    //     trainerId: selectedTrainer,
-    //     currentAttendance: 0,
-    //     maxAttendance: parseInt(maxAttendance),
-    //     startDate: startDate,
-    //     endDate: endDate,
-    //     userIds: []
-    //   }
-    //   dispatch(addActivity(
-    //     "http://localhost:8000/activities",
-    //     {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     activity))
-    //   setShowEditModal(false)
-    //   setShowEditMode(false)
-    // }
-  }
-  const onEditActivity = () => {
-    // if (maxAttendance > selectedActivity.currentAttendance) {
-    //   let activity = {
-    //     id: selectedActivity._id,
-    //     gymId: gymId,
-    //     courseId: selectedCourse,
-    //     trainerId: selectedTrainer,
-    //     maxAttendance: parseInt(maxAttendance),
-    //     currentAttendance: selectedActivity.currentAttendance,
-    //     startDate: startDate,
-    //     endDate: endDate,
-    //     userIds: selectedActivity.userIds
-    //   }
-    //   let course = courses.find(course => course.key === selectedCourse)
-    //   let trainer = trainers.find(trainer => trainer.trainerId === selectedTrainer)
-    //   let activityToDisplay = { ...selectedActivity, startDate: startDate, maxAttendance: maxAttendance, endDate: endDate, text: course.text, trainerName: trainer.trainerName, trainerImage: trainer.trainerImage }
-    //   dispatch(editActivity(
-    //     `http://localhost:8000/activities/${selectedActivity._id}`,
-    //     {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     activity
-    //   ))
-    //   setSelectedActivity(activityToDisplay)
-    //   setShowEditMode(false)
-    // }
-  }
-  const onDeleteActivity = () => {
-    // dispatch(deleteActivity(
-    //   `http://localhost:8000/activities/${selectedActivity._id}`,
-    //   {
-    //     'Content-Type': 'application/json'
-    //   }
-    // ))
-    setShowEditModal(false)
-  }
-  const changeMonth = (e, { value }) => {
-    setCurrentMonth(value)
-    setDaysOfTheMonth(fillCalendarDays(value))
-  }
-  const changeCourse = (e, { value }) => {
-    setSelectedCourse(value)
-  }
-  const changeTrainer = (e, { value }) => {
-    setSelectedTrainer(value)
-  }
-  const changeMaxAttendance = (e, { value }) => {
-    setMaxAttendance(value)
-  }
-  const changeStartDate = (event) => {
-    setStartDate(event.target.value)
-  }
-  const changeEndDate = (event) => {
-    setEndDate(event.target.value)
-  }
-  const fillCalendarDays = (selectedMonthIndex) => {
-    let selectedMonthItem = months[selectedMonthIndex - 1]
-
-    let selectedMonthDays = Array(selectedMonthItem.daysInMonth - 1)
-      .fill(0)
-      .map((day, i) => ({
-        dayNumber: i + 1,
+      const result = {
+        year,
+        month,
+        dayNumber,
         class: "day",
-        month: selectedMonthIndex
-      }))
+        events: makeEventsForDay(year, month, dayNumber, events),
+      };
 
-    let firstDayOfTheMonthDate = `${selectedMonthIndex} 1 2021`
-    let firstDayOfTheMonthWeekIndex = new Date(firstDayOfTheMonthDate).getDay()
+      return result;
+    });
+  return selectedMonthDays;
+};
 
-    const previousMonthDisabledDays = Array(firstDayOfTheMonthWeekIndex === 0 ?
-      6 : firstDayOfTheMonthWeekIndex - 1)
-      .fill(0)
-      .map((previousMonthDisabledDay, i) => ({
-        dayNumber: months[selectedMonthItem.value].daysInMonth - i,
+const selectedWeekDaysWithEvents = (selectedWeek, events) => {
+  const selectedWeekDays = Array(175)
+    .fill(0)
+    .map((_, index) => {
+      const currentMonthNoOfDays = new Date(
+        selectedWeek.startYear,
+        selectedWeek.startMonth,
+        0
+      ).getDate();
+      // TODO simplify
+      const year =
+        selectedWeek.startYear === selectedWeek.endYear
+          ? selectedWeek.startYear
+          : currentMonthNoOfDays < selectedWeek.startDay + (index % 7) &&
+            selectedWeek.endMonth === 1
+          ? selectedWeek.endYear
+          : selectedWeek.startYear;
+      const month =
+        selectedWeek.startMonth === selectedWeek.endMonth
+          ? selectedWeek.startMonth
+          : currentMonthNoOfDays < selectedWeek.startDay + (index % 7)
+          ? selectedWeek.endMonth
+          : selectedWeek.startMonth;
+      const dayNumber =
+        selectedWeek.startMonth === selectedWeek.endMonth
+          ? selectedWeek.startDay + (index % 7)
+          : selectedWeek.startDay + (index % 7) > currentMonthNoOfDays
+          ? (index % 7) - (currentMonthNoOfDays - selectedWeek.startDay)
+          : selectedWeek.startDay + (index % 7);
+      const hour = Math.trunc(index / 7) - 1;
+
+      const result = {
+        year,
+        month,
+        dayNumber,
+        class: "day",
+        hour,
+        events: makeEventsForHour(year, month, dayNumber, hour, events),
+      };
+      return result;
+    });
+  return selectedWeekDays;
+};
+
+const previousMonthDisabledDays = (
+  selectedMonthIndex,
+  selectedYear,
+  events
+) => {
+  let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 ${selectedYear}`;
+  let firstDayOfTheMonthWeekIndex = new Date(firstDayOfTheMonthDate).getDay();
+  const previousMonthDisabledDays = Array(
+    firstDayOfTheMonthWeekIndex === 0 ? 6 : firstDayOfTheMonthWeekIndex - 1 // Sunday is 0 Saturday is 6
+  )
+    .fill(0)
+    .map((_, index) => {
+      const previousMonth =
+        selectedMonthIndex > 0 ? months[selectedMonthIndex - 1] : months[11]; // if current month is Jan previous month is Dec
+
+      const year = selectedMonthIndex > 0 ? selectedYear : selectedYear - 1;
+      const month = selectedMonthIndex > 0 ? selectedMonthIndex : 12;
+      const dayNumber = previousMonth.daysInMonth - index;
+
+      const result = {
+        year,
+        month,
+        events: makeEventsForDay(dayNumber, year, month, events),
         class: "day day--disabled",
-        month: selectedMonthIndex - 1
-      }))
+        dayNumber,
+      };
 
+      return result;
+    })
+    .reverse();
 
-    let lastDayOfTheMonthDate = `${selectedMonthIndex} ${selectedMonthItem.daysInMonth} 2021`
-    let lastDayOfTheMonthWeekIndex = new Date(lastDayOfTheMonthDate).getDay()
-    let nextMonthDisabledDays = Array(7 - lastDayOfTheMonthWeekIndex)
-      .fill(0)
-      .map((nextMonthDisabledDay, i) => ({
-        dayNumber: i + 1,
+  return previousMonthDisabledDays;
+};
+
+const nextMonthDisabledDays = (
+  selectedMonthItem,
+  selectedMonthIndex,
+  selectedYear,
+  events
+) => {
+  let lastDayOfTheMonthDate = `${selectedMonthIndex + 1} ${
+    selectedMonthItem.daysInMonth
+  } ${selectedYear}`;
+  let lastDayOfTheMonthWeekIndex = new Date(lastDayOfTheMonthDate).getDay();
+  const nextMonthDisabledDays = Array(7 - lastDayOfTheMonthWeekIndex)
+    .fill(0)
+    .map((_, index) => {
+      const year = selectedMonthIndex < 11 ? selectedYear : selectedYear + 1;
+      const month = selectedMonthIndex < 11 ? selectedMonthIndex + 2 : 1;
+      const dayNumber = index + 1;
+
+      const result = {
+        year,
+        month,
+        dayNumber,
         class: "day day--disabled",
-        month: selectedMonthIndex + 1
-      }))
+        events: makeEventsForDay(dayNumber, year, month, events),
+      };
 
-    const result = [...previousMonthDisabledDays.reverse(), ...selectedMonthDays, ...nextMonthDisabledDays]
-    return result
-  }
-  const attendCourse = () => {
-    // let activity = {}
-    // if (selectedActivity.currentAttendance < selectedActivity.maxAttendance) {
-    //   activity = {
-    //     id: selectedActivity._id,
-    //     gymId: selectedActivity.gymId,
-    //     courseId: selectedActivity.courseId,
-    //     trainerId: selectedActivity.trainerId,
-    //     currentAttendance: ++selectedActivity.currentAttendance,
-    //     maxAttendance: selectedActivity.maxAttendance,
-    //     startDate: selectedActivity.startDate,
-    //     endDate: selectedActivity.endDate,
-    //     userIds: selectedActivity.userIds
-    //   }
-    //   activity.userIds.push(auth._id)
-    //   dispatch(editActivity(
-    //     `http://localhost:8000/activities/${selectedActivity._id}`,
-    //     {
-    //       'Content-Type': 'application/json'
-    //     },
-    //     activity))
-    // }
-  }
-  const leaveCourse = () => {
-    // let activity = {}
-    // activity = {
-    //   id: selectedActivity._id,
-    //   gymId: selectedActivity.gymId,
-    //   courseId: selectedActivity.courseId,
-    //   trainerId: selectedActivity.trainerId,
-    //   currentAttendance: --selectedActivity.currentAttendance,
-    //   maxAttendance: selectedActivity.maxAttendance,
-    //   startDate: selectedActivity.startDate,
-    //   endDate: selectedActivity.endDate,
-    //   userIds: selectedActivity.userIds
-    // }
-    // let index = activity.userIds.indexOf(auth._id);
-    // if (index >= 0) {
-    //   activity.userIds.splice(index, auth._id.length);
-    // }
-    // dispatch(editActivity(
-    //   `http://localhost:8000/activities/${selectedActivity._id}`,
-    //   {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   activity))
-    setShowEditModal(false)
-  }
-  const makeTaskClassName = (activity, day) => {
-    if (new Date(activity.startDate).getDate() === day && new Date(activity.endDate).getDate() === day) {
-      return "task task--first-day task--last-day short-text"
+      return result;
+    });
+
+  return nextMonthDisabledDays;
+};
+
+const fillCalendarDays = (
+  selectedMonthIndex,
+  events,
+  selectedYear,
+  selectedWeek,
+  selectedView
+) => {
+  const selectedMonthItem = months[selectedMonthIndex];
+  const result =
+    selectedView === "Month"
+      ? [
+          ...previousMonthDisabledDays(
+            selectedMonthIndex,
+            selectedYear,
+            events
+          ),
+          ...selectedMonthDaysWithEvents(
+            selectedMonthItem,
+            selectedYear,
+            selectedMonthIndex,
+            events
+          ),
+          ...nextMonthDisabledDays(
+            selectedMonthItem,
+            selectedMonthIndex,
+            selectedYear,
+            events
+          ),
+        ]
+      : [...selectedWeekDaysWithEvents(selectedWeek, events)];
+  return result;
+};
+
+const makeInterval = (
+  startYear,
+  startMonth,
+  startDay,
+  endYear,
+  endMonth,
+  endDay
+) => {
+  return {
+    startDate: moment([startYear, startMonth, startDay]),
+    endDate: moment([endYear, endMonth, endDay]),
+  };
+};
+
+const makeIntervalToFetchMonthEvents = (
+  selectedMonth,
+  selectedYear,
+  events
+) => {
+  const {
+    year: yearForPreviousMonth,
+    month: monthForPreviousMonth,
+    dayNumber: dayNumberForPreviousMonth,
+  } = previousMonthDisabledDays(selectedMonth.key, selectedYear, events)[0];
+  const nextDisabledDays = nextMonthDisabledDays(
+    selectedMonth,
+    selectedMonth.key,
+    selectedYear,
+    events
+  );
+  const {
+    year: yearForNextMonth,
+    month: monthForNextMonth,
+    dayNumber: dayNumberForNextMonth,
+  } = nextDisabledDays[nextDisabledDays.length - 1];
+  return {
+    startDate: moment([
+      yearForPreviousMonth,
+      monthForPreviousMonth - 1,
+      dayNumberForPreviousMonth,
+    ]),
+    endDate: moment([
+      yearForNextMonth,
+      monthForNextMonth - 1,
+      dayNumberForNextMonth,
+    ]),
+  };
+};
+
+//remove dragged event from source
+const removeDraggedEvent = (sourceDay, source) => {
+  return [
+    ...sourceDay.events.slice(0, source.index),
+    ...sourceDay.events.slice(source.index + 1),
+  ];
+};
+
+// add dropped event to destination at desired position
+const addDroppedEvent = (destinationDay, eventToMove, destination) => {
+  return [
+    ...destinationDay.events.slice(0, destination.index),
+    eventToMove,
+    ...destinationDay.events.slice(destination.index),
+  ];
+};
+
+// change startDate and endDate for the dropped event
+const updateEventDatesMonthView = (
+  eventToMove,
+  destinationDay,
+  editEventData
+) => {
+  const { id, title } = eventToMove;
+  const daysDiff =
+    new Date(eventToMove.endDate).getTime() -
+    new Date(eventToMove.startDate).getTime();
+  const startDate = moment([
+    destinationDay.year,
+    destinationDay.month - 1,
+    destinationDay.dayNumber,
+  ]).format("YYYY-MM-DD");
+  const endDate = moment(new Date(startDate).getTime() + daysDiff).format(
+    "YYYY-MM-DD"
+  );
+  return editEventData({ id, title, startDate, endDate });
+};
+
+const updateEventDatesWeekView = (
+  eventToMove,
+  destinationDay,
+  editEventData
+) => {
+  const { id, title } = eventToMove;
+  const daysDiff =
+    new Date(eventToMove.endDate).getTime() -
+    new Date(eventToMove.startDate).getTime();
+  const hoursDiff = eventToMove.endHour
+    ? moment(eventToMove.endHour, "HH:mm:ss").format("HH") -
+      moment(eventToMove.startHour, "HH:mm:ss").format("HH")
+    : 1;
+  const startDate = moment([
+    destinationDay.year,
+    destinationDay.month - 1,
+    destinationDay.dayNumber,
+  ]).format("YYYY-MM-DD");
+  const endDate = moment(new Date(startDate).getTime() + daysDiff).format(
+    "YYYY-MM-DD"
+  );
+  const startHour =
+    destinationDay.hour !== -1
+      ? moment(destinationDay.hour, "H").format("HH:mm:ss")
+      : null;
+  const endHour =
+    destinationDay.hour !== -1
+      ? moment(destinationDay.hour + hoursDiff, "H").format("HH:mm:ss")
+      : null;
+  return editEventData({ id, title, startDate, endDate, startHour, endHour });
+};
+/**
+ * getting the date for the first day of the week by subtracting from the day, the week index of that day
+  ex: today is wednesday 19 Oct -> Wed has the index 3 (Sun is 0, Sat is 6)
+  diff = 19 - 3  + 1 = 17 (Monday date)
+ * @param {*} date 
+ * @returns 
+ */
+const firstAndLastDayOfTheWeek = (date) => {
+  const currentDay = new Date(date);
+  const firstDayOffset =
+    currentDay.getDate() -
+    currentDay.getDay() +
+    (currentDay.getDay() === 0 ? -6 : 1);
+  const firstDay = new Date(currentDay.setDate(firstDayOffset));
+  // const lastDay = new Date(new Date(currentDay.setDate(firstDayOffset)).setDate(firstDay.getDate() + 6));
+  const lastDay = new Date(firstDay);
+  lastDay.setDate(lastDay.getDate() + 6);
+
+  return {
+    startYear: new Date(firstDay).getFullYear(),
+    startMonth: new Date(firstDay).getMonth() + 1,
+    startDay: new Date(firstDay).getDate(),
+    endYear: new Date(lastDay).getFullYear(),
+    endMonth: new Date(lastDay).getMonth() + 1,
+    endDay: new Date(lastDay).getDate(),
+  };
+};
+
+const CoursesCalendar = ({
+  events = [],
+  modalPopUp: ModalPopUp,
+  handleOpenModal,
+  fetchEventsByInterval,
+  getCurrentEventById,
+  makeDefaultEvent,
+  editEventData,
+}) => {
+  const [selectedView, setSelectedView] = useState("Month");
+  const [selectedMonth, setCurrentMonth] = useState(
+    months[new Date().getMonth()]
+  );
+  const [currentWeek, setCurrentWeek] = useState(
+    firstAndLastDayOfTheWeek(new Date())
+  );
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [daysOfTheMonth, setDaysOfTheMonth] = useState(
+    fillCalendarDays(
+      new Date().getMonth(),
+      events,
+      selectedYear,
+      firstAndLastDayOfTheWeek(new Date()),
+      selectedView
+    )
+  );
+  let firstDayOfCurrentWeek = new Date(
+    `${currentWeek.startYear}/${currentWeek.startMonth}/${currentWeek.startDay}`
+  );
+  let lastDayOfCurrentWeek = new Date(
+    `${currentWeek.endYear}/${currentWeek.endMonth}/${currentWeek.endDay}`
+  );
+
+  useEffect(() => {
+    console.log("mounted");
+    fetchEventsByInterval(
+      makeIntervalToFetchMonthEvents(selectedMonth, selectedYear, events)
+    );
+  }, []);
+
+  const onChangeMonth = (monthSelection, year) => {
+    setCurrentMonth(monthSelection);
+    fetchEventsByInterval(
+      makeIntervalToFetchMonthEvents(monthSelection, year, events)
+    );
+  };
+
+  const onChangeWeek = (firstDay, lastDay) => {
+    setCurrentWeek(firstAndLastDayOfTheWeek(firstDay));
+    fetchEventsByInterval(
+      makeInterval(
+        new Date(firstDay).getFullYear(),
+        new Date(firstDay).getMonth(),
+        new Date(firstDay).getDate(),
+        new Date(lastDay).getFullYear(),
+        new Date(lastDay).getMonth(),
+        new Date(lastDay).getDate()
+      )
+    );
+  };
+
+  const setNextYear = () => {
+    const year = selectedYear + 1;
+    setSelectedYear(year);
+    onChangeMonth(months[0], year);
+  };
+  const setPreviousYear = () => {
+    const year = selectedYear - 1;
+    setSelectedYear(year);
+    onChangeMonth(months[11], year);
+  };
+  const handleCreate = (year, month, day) => {
+    makeDefaultEvent(makeInterval(year, month, day, year, month, day));
+    handleOpenModal();
+  };
+  const handleEdit = (eventId) => {
+    getCurrentEventById(eventId);
+    handleOpenModal();
+  };
+
+  const handleChangePreviousMonth = (selectedMonth, selectedYear) => {
+    selectedMonth.key > 0
+      ? onChangeMonth(months[selectedMonth.key - 1], selectedYear)
+      : setPreviousYear();
+  };
+  const handleChangeNextMonth = (selectedMonth, selectedYear) => {
+    selectedMonth.key < 11
+      ? onChangeMonth(months[selectedMonth.key + 1], selectedYear)
+      : setNextYear();
+  };
+
+  const handleChangePreviousWeek = () => {
+    firstDayOfCurrentWeek = new Date(
+      firstDayOfCurrentWeek.setDate(firstDayOfCurrentWeek.getDate() - 7)
+    );
+    lastDayOfCurrentWeek = new Date(
+      lastDayOfCurrentWeek.setDate(lastDayOfCurrentWeek.getDate() - 7)
+    );
+    onChangeWeek(firstDayOfCurrentWeek, lastDayOfCurrentWeek);
+  };
+  const handleChangeNextWeek = () => {
+    firstDayOfCurrentWeek = new Date(
+      firstDayOfCurrentWeek.setDate(firstDayOfCurrentWeek.getDate() + 7)
+    );
+    lastDayOfCurrentWeek = new Date(
+      lastDayOfCurrentWeek.setDate(lastDayOfCurrentWeek.getDate() + 7)
+    );
+    onChangeWeek(firstDayOfCurrentWeek, lastDayOfCurrentWeek);
+  };
+
+  const handleToday = () => {
+    setSelectedYear(new Date().getFullYear());
+    const year = new Date().getFullYear();
+    if (selectedView === "Month") {
+      onChangeMonth(months[new Date().getMonth()], year);
+    } else if (selectedView === "Week") {
+      const today = firstAndLastDayOfTheWeek(new Date());
+      firstDayOfCurrentWeek = new Date(
+        `${today.startYear}/${today.startMonth}/${today.startDay}`
+      );
+      let lastDayOfCurrentWeek = new Date(
+        `${today.endYear}/${today.endMonth}/${today.endDay}`
+      );
+      onChangeWeek(firstDayOfCurrentWeek, lastDayOfCurrentWeek);
     }
-    else
-      if (new Date(activity.startDate).getDate() === day) {
-        return "task task--first-day short-text"
-      }
-      else
-        if (new Date(activity.endDate).getDate() === day) {
-          return "task task--last-day"
-        }
-        else
-          return "task task--one-day short-text"
-  }
-  const makeDayClassName = (activity, day) => {
-    if (new Date(activity.startDate).getDate() === day && new Date(activity.endDate).getDate() === day) {
-      return "day--one-day-event"
+  };
+
+  const setEventStyle = (event) => {
+    // timed event
+    if (event.startHour && event.endHour && event.startDate === event.endDate) {
+      return "task task--timed";
     }
-    else
-      if (new Date(activity.startDate).getDate() === day) {
-        return "day--start-event"
-      }
-      else
-        if (new Date(activity.endDate).getDate() === day) {
-          return "day--end-event"
-        }
-        else
-          return "day--one-event"
-  }
+    // past full day event
+    else if (new Date(event.endDate) < new Date()) {
+      return "task task--past-full-day";
+    }
+    // active full day event
+    return "task task--active-full-day";
+  };
 
-  // useEffect(
-  //   () => {
-  //     setDaysOfTheMonth(fillCalendarDays(new Date().getMonth() + 1))
-  //     dispatch(setCourses(
-  //       `http://localhost:8000/courses`
-  //     ))
-  //     dispatch(setTrainers(
-  //       `http://localhost:8000/trainers`
-  //     ))
-  //     dispatch(setActivities())
-  //   },
-  //   [],
-  // );
-  const filterActivities = (activity, dayOfTheMonth) => {
-    const currentDay =
-      new Date(`2021-${('0' + dayOfTheMonth.month).slice(-2)}-${('0' + dayOfTheMonth.dayNumber).slice(-2)}`)
-    return new Date(activity.startDate) <= currentDay && new Date(activity.endDate) >= currentDay
-  }
+  const displayWeeks = (currentWeek) => {
+    const result =
+      currentWeek.startMonth === currentWeek.endMonth
+        ? `${months[currentWeek.startMonth - 1].text} ${currentWeek.startYear}`
+        : `${months[currentWeek.startMonth - 1].text.slice(0, 3)} ${
+            currentWeek.startYear
+          } - ${months[currentWeek.endMonth - 1].text.slice(0, 3)} ${
+            currentWeek.endYear
+          }`;
+    return result;
+  };
 
-  return <div className="calendar-container">
-Calendar
-    {/* <div className="calendar-header">
-      <Dropdown
-        selection
-        value={selectedMonth}
-        options={months}
-        onChange={changeMonth} />
-      <p>2021</p>
-    </div>
+  useEffect(() => {
+    console.log("second");
+    setDaysOfTheMonth(
+      fillCalendarDays(
+        selectedMonth.key,
+        events,
+        selectedYear,
+        firstAndLastDayOfTheWeek(
+          new Date(
+            `${currentWeek.startYear}/${currentWeek.startMonth}/${currentWeek.startDay}`
+          )
+        ),
+        selectedView
+      )
+    );
+  }, [events, currentWeek, selectedMonth.key, selectedYear, selectedView]);
 
-    <div className="calendar">
-      {daysOfTheWeek.map((dayOfTheWeek, i) =>
-        <span key={i} className="day-name">{dayOfTheWeek}</span>)}
-      {daysOfTheMonth.map((dayOfTheMonth, i) =>
-        <section key={i} className={dayOfTheMonth.class}
-          onClick={() => changeDisplayModal(dayOfTheMonth)}
-        >
-          {new Date().getDate() === dayOfTheMonth.dayNumber &&
-            new Date().getMonth() + 1 === dayOfTheMonth.month ?
-            <Label
-              circular
-              color="blue"
-              key={i}
+  const monthSelector = (
+    <div className="calendar-header">
+      <button
+        className="calendar-header-arrow-btn"
+        onClick={() => handleChangePreviousMonth(selectedMonth, selectedYear)}
+      >
+        <img src="https://i.imgur.com/2gqThFI.png" alt="left-arrow" />
+      </button>
+
+      <div className="dropdown">
+        <button className="dropbtn">
+          {selectedMonth.text} {selectedYear}
+        </button>
+        <div className="dropdown-content">
+          {months.map((month, index) => (
+            <p
+              key={`key-${index}`}
+              onClick={() => onChangeMonth(months[month.key], selectedYear)}
+              className="dropdown-content-btn"
             >
-              {dayOfTheMonth.dayNumber}
-            </Label> :
-            <div >
-              {dayOfTheMonth.dayNumber}
-            </div>
-          }
-          {activitiesData &&
-            activitiesData
-              .filter((activity) => filterActivities(activity, dayOfTheMonth))
-              .slice(0, 1)
-              .map((activity, i) =>
-                <div className={makeDayClassName(activity, dayOfTheMonth.dayNumber)}>
-                  <section
-                    key={i}
-                    className={makeTaskClassName(activity, dayOfTheMonth.dayNumber) + ' ' + "activityDisplayed"}
-                    style={{
-                      background: `${activity.color}`,
-                      opacity: activity.currentAttendance === activity.maxAttendance ||
-                        new Date(activity.endDate) < new Date() ?
-                        0.5 : 1
-                    }}
-                    onClick={(event) => changeDisplayEditModal(event, activity, dayOfTheMonth.dayNumber)}>
-                    {new Date(activity.startDate).getDate() === dayOfTheMonth.dayNumber ? activity.text : null}
-                  </section>
-                </div>
-              )
-          }
-          {activitiesData && activitiesData
-            .filter((activity) => filterActivities(activity, dayOfTheMonth))
-            .length > 1 ?
-            <Dropdown text='More' multiple icon='add'>
-              <Dropdown.Menu color="#cc99ff">
-                <Dropdown.Menu scrolling>
-                  {activitiesData
-                    .filter((activity) => filterActivities(activity, dayOfTheMonth))
-                    .slice(1)
-                    .map((activity, i) => (
-                      <Dropdown.Item>
-                        <Label
-                          horizontal
-                          key={i}
-                          className={makeTaskClassName(activity, dayOfTheMonth.dayNumber) + ' ' + "moreActivities"}
-                          style={{
-                            background: `${activity.color}`,
-                            opacity: activity.currentAttendance === activity.maxAttendance ||
-                              new Date(activity.endDate) < new Date() ?
-                              0.5 : 1
-                          }}
-                          onClick={(event) => changeDisplayEditModal(event, activity)}>
-                          {activity.text}
-                        </Label>
-                      </Dropdown.Item>
-                    ))}
-                </Dropdown.Menu>
-              </Dropdown.Menu>
-            </Dropdown>
-            : null}
-        </section>
-      )}
-    </div>
+              {month.text} {selectedYear}
+            </p>
+          ))}
+        </div>
+      </div>
 
-    <Modal
-      size="tiny"
-      open={showEditModal}
-      onClose={changeDisplayEditModal}
-      onOpen={changeDisplayEditModal}
-      closeOnDimmerClick={false}
-    >
-      {showEditMode ?
-        <>
-          {selectedActivity._id ?
-            <Modal.Header>Edit event</Modal.Header> :
-            <Modal.Header>Add event</Modal.Header>}
-          <Modal.Content>
-            <h4>Choose a course</h4>
-            <Dropdown
-              selection
-              value={selectedCourse}
-              options={courses}
-              onChange={changeCourse} />
-            <h4>Maximum attendance</h4>
-            <Input type="number" min={0} value={maxAttendance} onChange={changeMaxAttendance} />
-            <h4>Choose a trainer</h4>
-            <Dropdown
-              selection
-              value={selectedTrainer}
-              options={trainersToChoose}
-              onChange={changeTrainer} />
-            <h4>Choose a start date</h4>
-            <Input type="date" value={startDate} onChange={changeStartDate} />
-            <h4>Choose an end date</h4>
-            <Input type="date" value={endDate} onChange={changeEndDate} />
-          </Modal.Content>
-          <Modal.Actions>
-            <Button negative onClick={selectedActivity._id ? changeShowEditMode : changeDisplayModal}>
-              Cancel
-            </Button>
-            <Button positive onClick={selectedActivity._id ? onEditActivity : onAddActivity}>
-              Save
-            </Button>
-          </Modal.Actions>
-        </>
-        :
-        <>
-          <Modal.Header>
-            <Grid>
-              <Grid.Column width={8}>
-                <Header as='h2'>
-                  <Label circular
-                    size="mini"
-                    className="course-label"
-                    style={{
-                      backgroundColor: `${selectedActivity.color}`
-                    }}
-                  />
-                  {selectedActivity.text}
-                </Header>
-              </Grid.Column>
-              <Grid.Column floated="right" width={4}>
-                {gymId ?
-                  <>
-                    <Icon className="activityIcon" name='pencil' color="grey" onClick={changeShowEditMode} />
-                    <Icon className="activityIcon" name='trash' color="red" onClick={onDeleteActivity} />
-                  </> : null}
-                <Icon className="activityIcon" name='cancel' color="grey" onClick={changeDisplayEditModal} />
-              </Grid.Column>
-            </Grid>
-          </Modal.Header>
-          <Modal.Content>
+      <button
+        className="calendar-header-arrow-btn"
+        onClick={() => handleChangeNextMonth(selectedMonth, selectedYear)}
+      >
+        <img src="https://i.imgur.com/uambqYY.png" alt="right-arrow" />
+      </button>
+      <button
+        onClick={() => handleToday()}
+        className="calendar-header-today-btn"
+      >
+        Today
+      </button>
+
+      <div className="dropdown">
+        <button className="dropwdown-view-btn">{selectedView}</button>
+        <div className="dropdown-view-content">
+          {views.map((view, index) => (
+            <p
+              key={`key-${index}`}
+              onClick={() => setSelectedView(view)}
+              className="dropdown-content-btn"
+            >
+              {view}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const weekSelector = (
+    <div className="calendar-header">
+      <button
+        className="calendar-header-arrow-btn"
+        onClick={() => handleChangePreviousWeek()}
+      >
+        <img src="https://i.imgur.com/2gqThFI.png" alt="left-arrow" />
+      </button>
+
+      <div className="dropdown dropbtn">{displayWeeks(currentWeek)}</div>
+
+      <button
+        className="calendar-header-arrow-btn"
+        onClick={() => handleChangeNextWeek()}
+      >
+        <img src="https://i.imgur.com/uambqYY.png" alt="right-arrow" />
+      </button>
+      <button
+        onClick={() => handleToday()}
+        className="calendar-header-today-btn"
+      >
+        Today
+      </button>
+
+      <div className="dropdown">
+        <button className="dropwdown-view-btn">{selectedView}</button>
+        <div className="dropdown-view-content">
+          {views.map((view, index) => (
+            <p
+              key={`key-${index}`}
+              onClick={() => setSelectedView(view)}
+              className="dropdown-content-btn"
+            >
+              {view}
+            </p>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  /**
+   * Week days names ex: Monday etc
+   */
+  const daysOfTheWeekIndicators = daysOfTheWeek.map((dayOfTheWeek, i) =>
+    selectedView === "Month" ? (
+      <span key={`key-${i}`} className="day-name">
+        {dayOfTheWeek}
+      </span>
+    ) : (
+      <span key={`key-${i}`} className="day-name">
+        {dayOfTheWeek} {daysOfTheMonth[i].dayNumber}
+      </span>
+    )
+  );
+
+  /**
+   * Move the event to different destination at selected position or keep it in place
+   * (will not reorder if source is the same as destination)
+   * ex: source has droppableId: 1 and index: 0, destination has droppableId: 3 and index: 1
+   * [{name: 1, events: [a,b]}, {name: 2, events: [*a,b]}, {name: 3, events: [a,b]},
+   * {name: 4, events: [a,*a,b]}, {name: 5, events: [a,b]}]
+   * @param {Object} dragResult
+   * @param {Object} dragResult.destination
+   * @param {String} dragResult.destination.droppableId
+   * @param {Number} dragResult.destination.index
+   * @param {Object} dragResult.source
+   * @param {String} dragResult.source.droppableId
+   * @param {Number} dragResult.source.index
+   * @returns
+   */
+  const onDragEndMonthView = (dragResult) => {
+    const { source, destination } = dragResult;
+    // if destination is not droppable or source is the same as destination, it will be kept in place
+    if (!destination || destination?.droppableId === source?.droppableId) {
+      return;
+    }
+
+    // make copy to make it safe to mutate, the source won't be changed
+    const allDaysCurrentMonth = daysOfTheMonth.slice();
+    const sourceDay = allDaysCurrentMonth[source.droppableId];
+    const destinationDay = allDaysCurrentMonth[destination.droppableId];
+    const eventToMove = sourceDay.events[source.index];
+    console.log({ source, destination });
+    // replacing item in array is safe to mutate,
+    // it won't change the original source
+    allDaysCurrentMonth[source.droppableId] = {
+      ...sourceDay,
+      events: removeDraggedEvent(sourceDay, source),
+    };
+
+    allDaysCurrentMonth[destination.droppableId] = {
+      ...destinationDay,
+      events: addDroppedEvent(destinationDay, eventToMove, destination),
+    };
+
+    updateEventDatesMonthView(eventToMove, destinationDay, editEventData);
+    setDaysOfTheMonth(allDaysCurrentMonth);
+  };
+
+  const onDragEndWeekView = (dragResult) => {
+    const { source, destination } = dragResult;
+    // if destination is not droppable or source is the same as destination, it will be kept in place
+    if (!destination || destination?.droppableId === source?.droppableId) {
+      return;
+    }
+    console.log({ source, destination });
+    // make copy to make it safe to mutate, the source won't be changed
+    const allDaysCurrentWeek = daysOfTheMonth.slice();
+    const sourceDay = allDaysCurrentWeek[source.droppableId];
+    const destinationDay = allDaysCurrentWeek[destination.droppableId];
+    const eventToMove = sourceDay.events[source.index];
+
+    // replacing item in array is safe to mutate,
+    // it won't change the original source
+    allDaysCurrentWeek[source.droppableId] = {
+      ...sourceDay,
+      events: removeDraggedEvent(sourceDay, source),
+    };
+    allDaysCurrentWeek[destination.droppableId] = {
+      ...destinationDay,
+      events: addDroppedEvent(destinationDay, eventToMove, destination),
+    };
+
+    updateEventDatesWeekView(eventToMove, destinationDay, editEventData);
+    setDaysOfTheMonth(allDaysCurrentWeek);
+  };
+  const dayCells = daysOfTheMonth.map((dayOfTheMonth, dayIndex) => {
+    return (
+      <Droppable droppableId={`${dayIndex}`} key={`key-${dayIndex}`}>
+        {(provided) => (
+          <section
+            className={dayOfTheMonth.class}
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+          >
             <div>
-              <Grid >
-                <Grid.Row columns={2}>
-                  <Grid.Column width={1}>
-                    <Icon name="calendar alternate outline" color="grey" size="large" />
-                  </Grid.Column>
-                  <Grid.Column>
-                    {new Date(selectedActivity.startDate).getMonth() === new Date(selectedActivity.endDate).getMonth() ?
-                      <h3>
-                        {moment(selectedActivity.startDate).format("D")}{`  `}-
-                        {`  `}{moment(selectedActivity.endDate).format("D")}{`  `}
-                        {moment(selectedActivity.startDate).format("MMMM")}{`  `}
-                        {new Date(selectedActivity.startDate).getFullYear()}
-                      </h3>
-                      :
-                      <h3>
-                        {moment(selectedActivity.startDate).format("D MMMM")}{`  `}-
-                        {`  `}{moment(selectedActivity.endDate).format("D MMMM")}{`  `}
-                        {new Date(selectedActivity.startDate).getFullYear()}
-                      </h3>}
-                  </Grid.Column>
-                </Grid.Row>
-                <Grid.Row columns={2}>
-                  <Grid.Column width={1}>
-                    <Icon name="id badge outline" color="grey" size="large" />
-                  </Grid.Column>
-                  <Grid.Column>
-                    <Header as="h3">Trainers</Header>
-                    <List horizontal>
-                      <List.Item>
-                        <Image avatar src={selectedActivity.trainerImage} />
-                        <List.Content>
-                          <List.Header>{selectedActivity.trainerName}</List.Header>
-                        </List.Content>
-                      </List.Item>
-                    </List>
-                  </Grid.Column>
-                </Grid.Row>
-                <Grid.Row columns={3}>
-                  <Grid.Column width={1}>
-                    <Icon
-                      name=
-                      {selectedActivity.maxAttendance === selectedActivity.currentAttendance ||
-                        new Date(selectedActivity.endDate) < new Date() ?
-                        "minus circle" :
-                        "check circle outline"
-                      }
-                      color=
-                      {selectedActivity.maxAttendance === selectedActivity.currentAttendance ||
-                        new Date(selectedActivity.endDate) < new Date() ?
-                        "red" :
-                        "green"
-                      }
-                      size="large" />
-                  </Grid.Column>
-                  <Grid.Column width={10}>
-                    <h3>Spots available: {selectedActivity.maxAttendance - selectedActivity.currentAttendance}</h3>
-                  </Grid.Column>
-                  {gymId ?
-                    <Button
-                      floated="right"
-                      color="blue"
-                      disabled={selectedActivity.maxAttendance === selectedActivity.currentAttendance ||
-                        new Date(selectedActivity.endDate) < new Date() || selectedActivity.userIds.includes(auth._id) ?
-                        true : false}
-                      onClick={attendCourse}>
-                      Attend course</Button> : null}
-                  {userId ?
-                    <Button
-                      floated="right"
-                      color="blue"
-                      onClick={leaveCourse}>
-                      Leave course</Button> : null}
-                </Grid.Row>
-              </Grid>
+              <div
+                onClick={() => {
+                  handleCreate(
+                    dayOfTheMonth.year,
+                    dayOfTheMonth.month - 1,
+                    dayOfTheMonth.dayNumber
+                  );
+                }}
+              >
+                {dayOfTheMonth.dayNumber}
+                {provided.placeholder}
+              </div>
+              {dayOfTheMonth.events.map((event, eventIndex) => (
+                <Draggable
+                  key={`key-${eventIndex}`}
+                  draggableId={`day-${dayOfTheMonth.dayNumber}-${event.id}`}
+                  index={eventIndex}
+                >
+                  {(provided) => (
+                    <section
+                      onClick={() => {
+                        handleEdit(event.id);
+                      }}
+                      className={setEventStyle(event)}
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      {event.startHour} {event.title}
+                    </section>
+                  )}
+                </Draggable>
+              ))}
             </div>
-          </Modal.Content>
-        </>}
-    </Modal> */}
-  </div>
-}
-export default CoursesCalendar
+          </section>
+        )}
+      </Droppable>
+    );
+  });
+
+  const hours = Array(25)
+    .fill(0)
+    .map((_, index) =>
+      index === 0 ? (
+        <div className="dayWeekView"></div>
+      ) : index - 1 < 12 ? (
+        <div className="dayWeekView">{index - 1} am</div>
+      ) : index - 1 === 12 ? (
+        <div className="dayWeekView">{index - 1} pm</div>
+      ) : (
+        <div className="dayWeekView">{index - 13} pm</div>
+      )
+    );
+
+  const hourCells = daysOfTheMonth.map((dayOfTheMonth, dayIndex) => {
+    return (
+      <section>
+        <Droppable droppableId={`${dayIndex}`} key={`key-${dayIndex}`}>
+          {(provided) => (
+            <div
+              className="dayWeekView"
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+              onClick={() => {
+                handleCreate(
+                  dayOfTheMonth.year,
+                  dayOfTheMonth.month - 1,
+                  dayOfTheMonth.dayNumber
+                );
+              }}
+            >
+              <div>{provided.placeholder}</div>
+              {dayOfTheMonth.events.map((event, eventIndex) => (
+                <Draggable
+                  key={`key-${eventIndex}`}
+                  draggableId={`day-${dayOfTheMonth.dayNumber}-${event.id}`}
+                  index={eventIndex}
+                >
+                  {(provided) => (
+                    <section
+                      onClick={() => {
+                        handleEdit(event.id);
+                      }}
+                      className={setEventStyle(event)}
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                    >
+                      {event.startHour} {event.title}
+                    </section>
+                  )}
+                </Draggable>
+              ))}
+            </div>
+          )}
+        </Droppable>
+      </section>
+    );
+  });
+
+  return selectedView === "Month" ? (
+    <DragDropContext onDragEnd={onDragEndMonthView}>
+      <div className="calendar-container">
+        {monthSelector}
+        <div className="calendar">
+          {daysOfTheWeekIndicators}
+          {dayCells}
+        </div>
+        <ModalPopUp></ModalPopUp>
+      </div>
+    </DragDropContext>
+  ) : (
+    <DragDropContext onDragEnd={onDragEndWeekView}>
+      <div className="calendar-container">
+        {weekSelector}
+        <div className="hours-weekdays-wrapper">
+          <div className="hours">
+            <div className="day-name"></div>
+            {hours}
+          </div>
+          <div className="calendarWeekView">
+            {daysOfTheWeekIndicators}
+            {hourCells}
+          </div>
+        </div>
+        <ModalPopUp></ModalPopUp>
+      </div>
+    </DragDropContext>
+  );
+};
+
+export default CoursesCalendar;
