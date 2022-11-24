@@ -8,6 +8,7 @@ import { fillCalendarDays } from "./fillCalendarDays";
 import moment from "moment";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import { makeInterval } from "../week/makeInterval";
+import eventsMatrix from "./eventsMatrix";
 
 const Month = ({
   viewNames,
@@ -94,6 +95,9 @@ const Month = ({
   const [daysOfTheMonth, setDaysOfTheMonth] = useState(
     fillCalendarDays(new Date().getMonth(), events, selectedYear)
   );
+  const [eventsMatrixState, setEventsMatrixState] = useState(
+    eventsMatrix(events)
+  );
 
   const setNextYear = () => {
     const year = selectedYear + 1;
@@ -130,7 +134,6 @@ const Month = ({
     makeDefaultEvent(makeInterval(year, month, day, year, month, day));
     handleOpenModal();
   };
-
   const displayMonth = (
     <div className="dropdown">
       <button className="dropbtn">
@@ -162,6 +165,176 @@ const Month = ({
     );
   }, [events, selectedMonth.key, selectedYear]);
 
+  useEffect(() => {
+    setEventsMatrixState(eventsMatrix(events));
+  }, [events]);
+
+  // const addToStartDate = (eventStartDate, index) => {
+  //   const day = new Date(eventStartDate).getDate() + index;
+  //   const year = new Date(eventStartDate).getFullYear();
+  //   const month = new Date(eventStartDate).getMonth() + 1;
+  //   return moment(new Date(`${month}, ${day}, ${year}`)).format("YYYY-MM-DD");
+  // };
+
+  // the day is already in the eventsMatrix
+  // const isDayOld = (acc, eventStartDate, diffDayIndex) => {
+  //   return Object.keys(acc).includes(
+  //     addToStartDate(eventStartDate, diffDayIndex)
+  //   );
+  // };
+
+  //   const isDayOldEventOld = (
+  //     acc,
+  //     eventStartDate,
+  //     diffDayIndex,
+  //     currentEvent
+  //   ) => {
+  //     return Object.values(
+  //       acc[
+  //         `${addToStartDate(
+  //           eventStartDate,
+  //           diffDayIndex > 0 ? diffDayIndex - 1 : diffDayIndex
+  //         )}`
+  //       ]
+  //     ).includes(currentEvent);
+  //   };
+
+  //   // if the event is found on the previous day, then set de index to the same from the previous day
+  //   const addDayOldEventOld = (
+  //     acc,
+  //     eventStartDate,
+  //     diffDayIndex,
+  //     currentEvent
+  //   ) => {
+  //     return {
+  //       ...acc,
+  //       [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //         ...acc[`${addToStartDate(eventStartDate, diffDayIndex)}`],
+  //         [`${Object.keys(
+  //           acc[`${addToStartDate(eventStartDate, diffDayIndex - 1)}`]
+  //         ).pop()}`]: currentEvent,
+  //       },
+  //     };
+  //   };
+  //  // if the event isn't found on the previous day, then set the index to the last index of the current day + 1
+  //   const addDayOldEventNew = (
+  //     acc,
+  //     eventStartDate,
+  //     diffDayIndex,
+  //     currentEvent
+  //   ) => {
+  //     return {
+  //       ...acc,
+  //       [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //         ...acc[`${addToStartDate(eventStartDate, diffDayIndex)}`],
+  //         [parseInt(
+  //           Object.keys(
+  //             acc[`${addToStartDate(eventStartDate, diffDayIndex)}`]
+  //           ).pop()
+  //         ) + 1]: currentEvent,
+  //       },
+  //     };
+  //   };
+
+  //   const addDayNewEventOld = (
+  //     acc,
+  //     eventStartDate,
+  //     diffDayIndex,
+  //     currentEvent
+  //   ) => {
+  //     return {
+  //       ...acc,
+  //       [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //         [`${Object.keys(
+  //           acc[`${addToStartDate(eventStartDate, diffDayIndex - 1)}`]
+  //         ).pop()}`]: currentEvent,
+  //       },
+  //     };
+  //   };
+
+  //   const addDayNewEventNew = (
+  //     acc,
+  //     eventStartDate,
+  //     diffDayIndex,
+  //     currentEvent
+  //   ) => {
+  //     return {
+  //       ...acc,
+  //       [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //         0: currentEvent,
+  //       },
+  //     };
+  //   };
+
+  //   // the day is not already in the eventsMatrix
+  //   const isDayNewEventOld = (acc, eventStartDate, index) => {
+  //     const a = acc[`${addToStartDate(eventStartDate, index - 1)}`];
+  //     return a;
+  //   };
+
+  // const eventsMatrix = events.reduce((acc, currentEvent) => {
+  //   const startEndDateDiff =
+  //     new Date(currentEvent.endDate).getDate() -
+  //     new Date(currentEvent.startDate).getDate();
+  //   const diffArray =
+  //     startEndDateDiff > 0
+  //       ? Array(startEndDateDiff + 1).fill(0)
+  //       : Array(1).fill(0);
+  //   let eventStartDate = new Date(currentEvent.startDate);
+  //   diffArray.map(
+  //     (_, diffDayIndex) =>
+  //       (acc = Object.keys(acc).includes(
+  //         addToStartDate(eventStartDate, diffDayIndex)
+  //       )
+  //         ? Object.values(
+  //           acc[
+  //             `${addToStartDate(
+  //               eventStartDate,
+  //               diffDayIndex > 0 ? diffDayIndex - 1 : diffDayIndex
+  //             )}`
+  //           ]
+  //         ).includes(currentEvent)
+  //           ? {
+  //             ...acc,
+  //             [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //               ...acc[`${addToStartDate(eventStartDate, diffDayIndex)}`],
+  //               [`${Object.keys(
+  //                 acc[`${addToStartDate(eventStartDate, diffDayIndex - 1)}`]
+  //               ).pop()}`]: currentEvent,
+  //             },
+  //           }
+  //           : {
+  //             ...acc,
+  //             [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //               ...acc[`${addToStartDate(eventStartDate, diffDayIndex)}`],
+  //               [parseInt(
+  //                 Object.keys(
+  //                   acc[`${addToStartDate(eventStartDate, diffDayIndex)}`]
+  //                 ).pop()
+  //               ) + 1]: currentEvent,
+  //             },
+  //           }
+  //         : isDayNewEventOld(acc, eventStartDate, diffDayIndex)
+  //         ? {
+  //           ...acc,
+  //           [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //             [`${Object.keys(
+  //               acc[`${addToStartDate(eventStartDate, diffDayIndex - 1)}`]
+  //             ).pop()}`]: currentEvent,
+  //           },
+  //         }
+  //         : {
+  //           ...acc,
+  //           [`${addToStartDate(eventStartDate, diffDayIndex)}`]: {
+  //             0: currentEvent,
+  //           },
+  //         })
+  //   );
+  //   return acc;
+  // }, {});
+
+  // console.log({ eventsMatrix });
+
   return (
     <div>
       <DragDropContext onDragEnd={onDragEndMonthView}>
@@ -176,7 +349,14 @@ const Month = ({
           </ViewSelector>
           <div className="calendar">
             {daysOfTheWeekIndicators}
-            <Days {...{ daysOfTheMonth, handleCreate, handleEdit }} />
+            <Days
+              {...{
+                daysOfTheMonth,
+                handleCreate,
+                handleEdit,
+                eventsMatrix: eventsMatrix(events),
+              }}
+            />
           </div>
           <ModalPopUp />
         </div>

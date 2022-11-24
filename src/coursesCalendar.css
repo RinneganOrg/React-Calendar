@@ -234,7 +234,6 @@
 .day:nth-of-type(7n + 7) {
   grid-column: 7/7;
 }
-
 .day-name {
   font-size: 12px;
   text-transform: uppercase;
@@ -254,12 +253,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.empty-cell{
+  padding-left: 4px;
+  font-size: 14px;
+  position: relative;
+  min-height: 20px;
+  margin-bottom: 4px;
+}
 .task {
   padding-left: 4px;
   font-size: 14px;
   position: relative;
   text-align: left;
   min-height: 20px;
+  margin-bottom: 2px;
 }
 .task--past-full-day {
   grid-column: 5 / span 3;
@@ -300,6 +307,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.event-3-days{
+  width: 385px;
+}
+.event-2-days{
+  width: 255px;
 }
 i.icon.activityIcon {
   margin-right: 8px;

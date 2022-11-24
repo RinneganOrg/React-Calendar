@@ -8,6 +8,7 @@ import Hours from "./Hours";
 import { makeInterval } from "./makeInterval";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import moment from "moment";
+import eventsMatrix from "../month/eventsMatrix"
 
 const Week = ({
   viewNames,
@@ -20,6 +21,7 @@ const Week = ({
   handleOpenModal,
   makeDefaultEvent
 }) => {
+  const filteredEvents = events.filter((event) => event.startHour === null)
   const updateEventDatesWeekView = (
     eventToMove,
     destinationDay,
@@ -87,6 +89,9 @@ const Week = ({
   );
   const [weekHours, setWeekHours] = useState(
     fillCalendarDays(events, firstAndLastDayOfTheWeek(new Date()))
+  );
+  const [eventsMatrixState, setEventsMatrixState] = useState(
+    eventsMatrix(filteredEvents)
   );
 
   const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK.map((dayOfTheWeek, i) => (
@@ -191,6 +196,10 @@ const Week = ({
     );
   }, [events, selectedWeek]);
 
+  useEffect(() => {
+    setEventsMatrixState(eventsMatrix(events));
+  }, [events]);
+
   const hourIndicators = Array(25)
     .fill(0)
     .map((_, index) =>
@@ -210,7 +219,7 @@ const Week = ({
         </div>
       )
     );
-
+  
   return (
     <div>
       <DragDropContext onDragEnd={onDragEndWeekView}>
@@ -230,7 +239,7 @@ const Week = ({
             </div>
             <div className="calendarWeekView">
               {daysOfTheWeekIndicators}
-              <Hours {...{ weekHours, handleCreate, handleEdit }} />
+              <Hours {...{ weekHours, handleCreate, handleEdit,  eventsMatrix: eventsMatrix(filteredEvents) }} />
             </div>
           </div>
           <ModalPopUp />

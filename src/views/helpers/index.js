@@ -9,6 +9,19 @@ export const eventStyle = (event) => {
   }
   // active full day event
   return "task task--active-full-day";
+
+  // // 3 days
+  // if(new Date(event.endDate).getDate() - new Date(event.startDate).getDate() === 2) {
+  //   return "task event-3-days task--active-full-day"
+  // }
+  // // 2 days
+  // if(new Date(event.endDate).getDate() - new Date(event.startDate).getDate() === 1) {
+  //   return "task event-2-days task--active-full-day"
+  // }
+  // // 1 day
+  // if(new Date(event.endDate).getDate() - new Date(event.startDate).getDate() === 0) {
+  //   return "task task--active-full-day"
+  // }
 };
 
  //remove dragged event from source
