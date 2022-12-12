@@ -5,7 +5,8 @@
   "private": true,
   "dependencies": {
     "moment": "^2.29.1",
-    "react-beautiful-dnd": "^13.1.0"
+    "react-beautiful-dnd": "^13.1.0",
+    "use-mouse-drag": "^1.0.2"
   },
   "eslintConfig": {
     "extends": [

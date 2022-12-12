@@ -8,6 +8,6 @@ export const makeEventsForHour = (year, month, dayNumber, hour, events) =>
     const isCorrectHour =
       !event.startHour && hour === -1
         ? true
-        : moment(event.startHour, "HH:mm:ss").hour() === hour;
+        : moment(event.startHour, "HH:mm").hour() === hour;
     return isCorrectDay && isCorrectMonth && isCorrectYear && isCorrectHour;
   });

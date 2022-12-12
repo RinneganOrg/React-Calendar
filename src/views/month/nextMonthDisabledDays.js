@@ -22,7 +22,7 @@ export const nextMonthDisabledDays = (
         month,
         dayNumber,
         class: "day day--disabled",
-        events: makeEventsForDay(dayNumber, year, month, events),
+        events: makeEventsForDay(year, month, dayNumber, events),
       };
 
       return result;

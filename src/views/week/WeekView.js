@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import ViewSelector from "../ViewSelector";
 import { DragDropContext } from "react-beautiful-dnd";
-import { DAYS_OF_THE_WEEK, MONTHS } from "../../constants";
+import { DAYS_OF_THE_WEEK_MONTH_VIEW, DAYS_OF_THE_WEEK_WEEK_VIEW, MONTHS } from "../../constants";
 import { firstAndLastDayOfTheWeek } from "./firstAndLastDayOfTheWeek";
 import { selectedWeekDaysWithEvents } from "./selectedWeekDaysWithEvents";
 import Hours from "./Hours";
 import { makeInterval } from "./makeInterval";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import moment from "moment";
-import eventsMatrix from "../month/eventsMatrix"
+import eventsMatrix from "../month/eventsMatrix";
+// import weekEventsMatrix from "./weekEventsMatrix"
 
 const Week = ({
   viewNames,
@@ -21,7 +22,7 @@ const Week = ({
   handleOpenModal,
   makeDefaultEvent
 }) => {
-  const filteredEvents = events.filter((event) => event.startHour === null)
+  const fullDayEvents = events.filter((event) => event.startHour === null)
   const updateEventDatesWeekView = (
     eventToMove,
     destinationDay,
@@ -32,8 +33,8 @@ const Week = ({
       new Date(eventToMove.endDate).getTime() -
       new Date(eventToMove.startDate).getTime();
     const hoursDiff = eventToMove.endHour
-      ? moment(eventToMove.endHour, "HH:mm:ss").format("HH") -
-        moment(eventToMove.startHour, "HH:mm:ss").format("HH")
+      ? moment(eventToMove.endHour, "HH:mm").format("HH") -
+        moment(eventToMove.startHour, "HH:mm").format("HH")
       : 1;
     const startDate = moment([
       destinationDay.year,
@@ -45,11 +46,11 @@ const Week = ({
     );
     const startHour =
       destinationDay.hour !== -1
-        ? moment(destinationDay.hour, "H").format("HH:mm:ss")
+        ? moment(destinationDay.hour, "H").format("HH:mm")
         : null;
     const endHour =
-      destinationDay.hour !== -1
-        ? moment(destinationDay.hour + hoursDiff, "H").format("HH:mm:ss")
+      destinationDay.hour !== -1 && eventToMove.endHour
+        ? moment(destinationDay.hour + hoursDiff, "H").format("HH:mm")
         : null;
     return editEventData({ id, title, startDate, endDate, startHour, endHour });
   };
@@ -91,14 +92,24 @@ const Week = ({
     fillCalendarDays(events, firstAndLastDayOfTheWeek(new Date()))
   );
   const [eventsMatrixState, setEventsMatrixState] = useState(
-    eventsMatrix(filteredEvents)
+    eventsMatrix(fullDayEvents)
   );
+  // const [weekEventsMatrixState, setWeekEventsMatrixState] = useState(
+  //   weekEventsMatrix(events)
+  // );
+  const hourEvents = events.filter((event) => event.startHour !== null);
 
-  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK.map((dayOfTheWeek, i) => (
-    <span key={`key-${i}`} className="day-name">
+  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_WEEK_VIEW.map((dayOfTheWeek, i) => {
+   return i === 0 ? <span className="day-name" key={i}></span>: <span key={`key-${i}`} className="day-name">
       {dayOfTheWeek} {weekHours[i].dayNumber}
     </span>
-  ));
+  });
+
+  // const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_MONTH_VIEW.map((dayOfTheWeek, i) => {
+  //   return i === 0 ? <span className="day-name"></span>: <span key={`key-${i}`} className="day-name">
+  //      {dayOfTheWeek} {weekHours[i-1].dayNumber}
+  //    </span>
+  //  });
 
   let firstDayOfCurrentWeek = new Date(
     `${selectedWeek.startYear}/${selectedWeek.startMonth}/${selectedWeek.startDay}`
@@ -152,7 +163,7 @@ const Week = ({
   const handleCreate = (year, month, day, startHour) => {
     makeDefaultEvent({
       ...makeInterval(year, month, day, year, month, day),
-      startHour: moment(startHour, "HH:mm:ss"),
+      startHour: moment(startHour, "HH:mm"),
     });
     handleOpenModal();
   };
@@ -198,6 +209,7 @@ const Week = ({
 
   useEffect(() => {
     setEventsMatrixState(eventsMatrix(events));
+    // setWeekEventsMatrixState(weekEventsMatrix(events))
   }, [events]);
 
   const hourIndicators = Array(25)
@@ -233,13 +245,13 @@ const Week = ({
             <div className="dropdown dropbtn">{displayWeeks(selectedWeek)}</div>
           </ViewSelector>
           <div className="hours-weekdays-wrapper">
-            <div className="hours">
+            {/* <div className="hours">
               <div className="day-name"></div>
               {hourIndicators}
-            </div>
+            </div> */}
             <div className="calendarWeekView">
               {daysOfTheWeekIndicators}
-              <Hours {...{ weekHours, handleCreate, handleEdit,  eventsMatrix: eventsMatrix(filteredEvents) }} />
+              <Hours {...{ weekHours, handleCreate, handleEdit,  eventsMatrix: eventsMatrix(fullDayEvents), weekEventsMatrix: eventsMatrix(hourEvents) }} />
             </div>
           </div>
           <ModalPopUp />
