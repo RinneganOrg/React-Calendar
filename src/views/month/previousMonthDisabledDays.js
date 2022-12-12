@@ -19,11 +19,10 @@ export const previousMonthDisabledDays = (
       const year = selectedMonthIndex > 0 ? selectedYear : selectedYear - 1;
       const month = selectedMonthIndex > 0 ? selectedMonthIndex : 12;
       const dayNumber = previousMonth.daysInMonth - index;
-
       const result = {
         year,
         month,
-        events: makeEventsForDay(dayNumber, year, month, events),
+        events: makeEventsForDay(year, month, dayNumber, events),
         class: "day day--disabled",
         dayNumber,
       };
