@@ -5,7 +5,6 @@ export const firstAndLastDayOfTheWeek = (date) => {
     currentDay.getDay() +
     (currentDay.getDay() === 0 ? -6 : 1);
   const firstDay = new Date(currentDay.setDate(firstDayOffset));
-  // const lastDay = new Date(new Date(currentDay.setDate(firstDayOffset)).setDate(firstDay.getDate() + 6));
   const lastDay = new Date(firstDay);
   lastDay.setDate(lastDay.getDate() + 6);
 

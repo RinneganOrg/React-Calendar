@@ -1,4 +1,5 @@
 import { makeEventsForDay } from "./makeEventsForDay";
+import { pastEventsConfig } from "./pastEventsConfig";
 
 export const selectedMonthDaysWithEvents = (
   selectedMonthItem,
@@ -18,6 +19,7 @@ export const selectedMonthDaysWithEvents = (
         month,
         dayNumber,
         class: "day",
+        pastEventsConfig: pastEventsConfig(year, month, dayNumber, events),
         events: makeEventsForDay(year, month, dayNumber, events),
       };
 

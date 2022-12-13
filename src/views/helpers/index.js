@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export const eventStyle = (event) => {
   // timed event
   if (event.startHour && event.endHour && event.startDate === event.endDate) {
@@ -11,7 +13,7 @@ export const eventStyle = (event) => {
   return "task task--active-full-day";
 };
 
- //remove dragged event from source
+//remove dragged event from source
 export const removeDraggedEvent = (sourceDay, source) => {
   return [
     ...sourceDay.events.slice(0, source.index),

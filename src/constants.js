@@ -12,6 +12,24 @@ export const MONTHS = [
   { key: 10, daysInMonth: 30, value: 11, text: "November" },
   { key: 11, daysInMonth: 31, value: 12, text: "December" },
 ];
-export const DAYS_OF_THE_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+export const DAYS_OF_THE_WEEK_WEEK_VIEW = [
+  "",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+  "Sun",
+];
+export const DAYS_OF_THE_WEEK_MONTH_VIEW = [
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+  "Sun",
+];
 export const VIEWS = ["Year", "Month", "Week", "Day"];
 export const INITIAL_VIEW = "Month";
