@@ -64,7 +64,7 @@ const Popup = ({
                 onClick={() => handleEdit(event.id)}
                 style={{ borderRadius: "0px" }}
               >
-                {event.title}
+               {event?.startHour} {event.title}
               </div>
               {eventExtendedToNextDay(event)}
             </div>
