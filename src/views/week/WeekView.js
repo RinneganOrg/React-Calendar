@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ViewSelector from "../ViewSelector";
 import { DragDropContext } from "react-beautiful-dnd";
-import { DAYS_OF_THE_WEEK_MONTH_VIEW, DAYS_OF_THE_WEEK_WEEK_VIEW, MONTHS } from "../../constants";
+import { DAYS_OF_THE_WEEK_WEEK_VIEW, MONTHS } from "../../constants";
 import { firstAndLastDayOfTheWeek } from "./firstAndLastDayOfTheWeek";
 import { selectedWeekDaysWithEvents } from "./selectedWeekDaysWithEvents";
 import Hours from "./Hours";
@@ -9,7 +9,6 @@ import { makeInterval } from "./makeInterval";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import moment from "moment";
 import eventsMatrix from "../month/eventsMatrix";
-// import weekEventsMatrix from "./weekEventsMatrix"
 
 const Week = ({
   viewNames,
@@ -20,9 +19,9 @@ const Week = ({
   fetchEventsByInterval,
   editEventData,
   handleOpenModal,
-  makeDefaultEvent
+  makeDefaultEvent,
 }) => {
-  const fullDayEvents = events.filter((event) => event.startHour === null)
+  const fullDayEvents = events.filter((event) => event.startHour === null);
   const updateEventDatesWeekView = (
     eventToMove,
     destinationDay,
@@ -94,22 +93,19 @@ const Week = ({
   const [eventsMatrixState, setEventsMatrixState] = useState(
     eventsMatrix(fullDayEvents)
   );
-  // const [weekEventsMatrixState, setWeekEventsMatrixState] = useState(
-  //   weekEventsMatrix(events)
-  // );
   const hourEvents = events.filter((event) => event.startHour !== null);
 
-  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_WEEK_VIEW.map((dayOfTheWeek, i) => {
-   return i === 0 ? <span className="day-name" key={i}></span>: <span key={`key-${i}`} className="day-name">
-      {dayOfTheWeek} {weekHours[i].dayNumber}
-    </span>
-  });
-
-  // const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_MONTH_VIEW.map((dayOfTheWeek, i) => {
-  //   return i === 0 ? <span className="day-name"></span>: <span key={`key-${i}`} className="day-name">
-  //      {dayOfTheWeek} {weekHours[i-1].dayNumber}
-  //    </span>
-  //  });
+  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_WEEK_VIEW.map(
+    (dayOfTheWeek, i) => {
+      return i === 0 ? (
+        <span className="day-name" key={i}></span>
+      ) : (
+        <span key={`key-${i}`} className="day-name">
+          {dayOfTheWeek} {weekHours[i].dayNumber}
+        </span>
+      );
+    }
+  );
 
   let firstDayOfCurrentWeek = new Date(
     `${selectedWeek.startYear}/${selectedWeek.startMonth}/${selectedWeek.startDay}`
@@ -209,29 +205,8 @@ const Week = ({
 
   useEffect(() => {
     setEventsMatrixState(eventsMatrix(events));
-    // setWeekEventsMatrixState(weekEventsMatrix(events))
   }, [events]);
 
-  const hourIndicators = Array(25)
-    .fill(0)
-    .map((_, index) =>
-      index === 0 ? (
-        <div key={index} className="dayWeekView"></div>
-      ) : index - 1 < 12 ? (
-        <div key={index} className="dayWeekView">
-          {index - 1} am
-        </div>
-      ) : index - 1 === 12 ? (
-        <div key={index} className="dayWeekView">
-          {index - 1} pm
-        </div>
-      ) : (
-        <div key={index} className="dayWeekView">
-          {index - 13} pm
-        </div>
-      )
-    );
-  
   return (
     <div>
       <DragDropContext onDragEnd={onDragEndWeekView}>
@@ -245,13 +220,17 @@ const Week = ({
             <div className="dropdown dropbtn">{displayWeeks(selectedWeek)}</div>
           </ViewSelector>
           <div className="hours-weekdays-wrapper">
-            {/* <div className="hours">
-              <div className="day-name"></div>
-              {hourIndicators}
-            </div> */}
             <div className="calendarWeekView">
               {daysOfTheWeekIndicators}
-              <Hours {...{ weekHours, handleCreate, handleEdit,  eventsMatrix: eventsMatrix(fullDayEvents), weekEventsMatrix: eventsMatrix(hourEvents) }} />
+              <Hours
+                {...{
+                  weekHours,
+                  handleCreate,
+                  handleEdit,
+                  eventsMatrix: eventsMatrix(fullDayEvents),
+                  weekEventsMatrix: eventsMatrix(hourEvents),
+                }}
+              />
             </div>
           </div>
           <ModalPopUp />

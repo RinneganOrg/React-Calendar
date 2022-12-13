@@ -21,7 +21,6 @@ const Month = ({
   handleOpenModal,
   makeDefaultEvent,
 }) => {
-  // change startDate and endDate for the dropped event
   const updateEventDatesMonthView = (
     eventToMove,
     destinationDay,
@@ -82,11 +81,13 @@ const Month = ({
     setDaysOfTheMonth(allDaysCurrentMonth);
   };
 
-  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_MONTH_VIEW.map((dayOfTheWeek, i) => (
-    <span key={`key-${i}`} className="day-name">
-      {dayOfTheWeek}
-    </span>
-  ));
+  const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_MONTH_VIEW.map(
+    (dayOfTheWeek, i) => (
+      <span key={`key-${i}`} className="day-name">
+        {dayOfTheWeek}
+      </span>
+    )
+  );
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setCurrentMonth] = useState(
@@ -167,7 +168,7 @@ const Month = ({
   useEffect(() => {
     setEventsMatrixState(eventsMatrix(events));
   }, [events]);
-  
+
   return (
     <div>
       <DragDropContext onDragEnd={onDragEndMonthView}>

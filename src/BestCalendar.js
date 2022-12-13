@@ -34,7 +34,7 @@ const BestCalendar = ({
           fetchEventsByInterval,
           editEventData,
           handleOpenModal,
-          makeDefaultEvent
+          makeDefaultEvent,
         }}
       />
     </div>

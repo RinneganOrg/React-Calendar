@@ -102,36 +102,6 @@ const isDayNewEventOld = (acc, eventStartDate, index, currentEvent) => {
 };
 
 const nextFreeIndex = (startEndDateDiff, eventsMatrixDay, eventStartDate) => {
-  // will hold the next free index for every day (from startDate to endDate)
-  // const freeIndex = [];
-  // Array(startEndDateDiff + 1)
-  //   .fill(0)
-  //   .map((_, index) => {
-  //     if (Object.keys(eventsMatrixDay).includes(addToStartDate(eventStartDate, index))) {
-  //       freeIndex.push(
-  //         parseInt(
-  //           Object.keys(eventsMatrixDay[`${addToStartDate(eventStartDate, index)}`]).pop()
-  //         ) + 1
-  //       );
-  //     } else {
-  //       freeIndex.push(0);
-  //     }
-  //     return freeIndex;
-  //   });
-  // const freeIndexArray = Array(startEndDateDiff + 1)
-  //   .fill(0)
-  //   .map((_, index) => {
-  //     if (Object.keys(eventsMatrixDay).includes(addToStartDate(eventStartDate, index))) {
-  //       return (
-  //         parseInt(
-  //           Object.keys(eventsMatrixDay[`${addToStartDate(eventStartDate, index)}`]).pop()
-  //         ) + 1
-  //       );
-  //     } else {
-  //       return 0;
-  //     }
-  //   });
-  // return freeIndexArray.sort().reverse()[0];
   const freeIndex = Array(startEndDateDiff + 1)
     .fill(0)
     .reduce((highestIndex, _, index) => {

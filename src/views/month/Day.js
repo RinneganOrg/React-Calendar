@@ -85,9 +85,6 @@ const Day = ({
   };
 
   const eventsList =
-    // dayOfTheMonth.events.length === 0
-    //   ? []
-    //   :
     !eventsMatrix[date]
       ? []
       : Array(highestIndex() + 1)
@@ -182,7 +179,7 @@ const Day = ({
               <section key={`key-${index}`} className="empty-cell"></section>
             );
           });
-  // console.log({eventsMatrix})
+
   const displayDay = (dayOfTheMonth) => {
     return dayOfTheMonth.year === new Date().getFullYear() &&
       dayOfTheMonth.month === new Date().getMonth() + 1 &&
@@ -211,16 +208,6 @@ const Day = ({
     );
   };
 
-  const handleEvent = (event) => {
-    // if (event.type === "mousedown") {
-    //   console.log(`Mouse X: ${event.clientX}, Mouse Y: ${event.clientY}`);
-    //    } else{
-    //     console.log('no')
-    //    }
-    console.log(event.type)
-   }
-
-
   return (
     <Droppable droppableId={`${dayIndex}`} key={`key-drop-${dayIndex}`}>
       {(provided) => (
@@ -233,13 +220,12 @@ const Day = ({
           <div key={`key-${dayIndex}`}>
             <div
               key={`key-div-${dayIndex}`}
-              onClick={(e) => {
+              onClick={() => {
                 handleCreate(
                   dayOfTheMonth.year,
                   dayOfTheMonth.month - 1,
                   dayOfTheMonth.dayNumber
                 );
-                handleEvent(e)
               }}
             >
               {displayDay(dayOfTheMonth)}

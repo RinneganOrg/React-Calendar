@@ -35,16 +35,10 @@ const ViewSelector = ({
         <img src="https://i.imgur.com/2gqThFI.png" alt="left-arrow" />
       </button>
       {displayMonth}
-      <button
-        className="calendar-header-arrow-btn"
-        onClick={handleChangeNext}
-      >
+      <button className="calendar-header-arrow-btn" onClick={handleChangeNext}>
         <img src="https://i.imgur.com/uambqYY.png" alt="right-arrow" />
       </button>
-      <button
-        onClick={handleToday}
-        className="calendar-header-today-btn"
-      >
+      <button onClick={handleToday} className="calendar-header-today-btn">
         Today
       </button>
       {viewSelect}

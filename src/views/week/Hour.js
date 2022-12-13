@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Draggable, Droppable } from "react-beautiful-dnd";
 import { eventStyle } from "../helpers";
 import moment from "moment";
-import Popup from "../month/Popup";
 
 const Hour = ({
   hourIndex,
@@ -12,10 +11,6 @@ const Hour = ({
   eventsMatrix,
   weekEventsMatrix,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const togglePopup = () => {
-    setIsOpen(!isOpen);
-  };
   const date = moment(`${hour.year}, ${hour.month}, ${hour.dayNumber}`).format(
     "YYYY-MM-DD"
   );
@@ -94,7 +89,6 @@ const Hour = ({
               )}
             </Draggable>
           ) : (
-            // )
             <section key={`key-${index}`} className="empty-cell"></section>
           );
         })

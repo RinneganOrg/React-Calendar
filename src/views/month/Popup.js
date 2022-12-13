@@ -22,7 +22,6 @@ const Popup = ({
       "YYYY-MM-DD"
     )
   );
-  // set the hour to 00:00 to be the same as event hour (for events the hour is 02:00 and for the date const is 00:00 and the date comparison will be false, even if is the same day)
   date.setUTCHours(0, 0, 0, 0);
 
   const eventFromPreviousDay = (event) => {
