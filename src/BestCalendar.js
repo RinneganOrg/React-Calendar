@@ -6,7 +6,8 @@ import { INITIAL_VIEW } from "./constants";
 const viewNames = Object.keys(views);
 
 const BestCalendar = ({
-  events = [],
+  normalEvents = [],
+  recursiveEvents = [],
   ModalPopUp,
   handleOpenModal,
   fetchEventsByInterval,
@@ -16,8 +17,8 @@ const BestCalendar = ({
 }) => {
   const [selectedView, setSelectedView] = useState(INITIAL_VIEW);
 
-  const handleEdit = (eventId) => {
-    getCurrentEventById(eventId);
+  const handleEdit = (eventId, recursive) => {
+    getCurrentEventById(eventId, recursive);
     handleOpenModal();
   };
   const View = views[selectedView];
@@ -30,7 +31,8 @@ const BestCalendar = ({
           setSelectedView,
           ModalPopUp,
           handleEdit,
-          events,
+          normalEvents,
+          recursiveEvents,
           fetchEventsByInterval,
           editEventData,
           handleOpenModal,

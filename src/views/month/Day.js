@@ -103,7 +103,7 @@ const Day = ({
                   <section
                     key={`key-ev-${index}`}
                     onClick={() => {
-                      handleEdit(eventsMatrix[date][index].id);
+                      handleEdit(eventsMatrix[date][index].id, eventsMatrix[date][index]?.recursive);
                     }}
                     ref={provided.innerRef}
                     {...provided.draggableProps}

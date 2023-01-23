@@ -15,13 +15,15 @@ const Week = ({
   setSelectedView,
   ModalPopUp,
   handleEdit,
+  normalEvents = [],
   events = [],
   fetchEventsByInterval,
   editEventData,
   handleOpenModal,
   makeDefaultEvent,
 }) => {
-  const fullDayEvents = events.filter((event) => event.startHour === null);
+  const fullDayEvents = normalEvents.filter((event) => event.startHour === null);
+  console.log({fullDayEvents})
   const updateEventDatesWeekView = (
     eventToMove,
     destinationDay,
@@ -64,23 +66,23 @@ const Week = ({
     const allDaysCurrentWeek = weekHours.slice();
     const sourceDay = allDaysCurrentWeek[source.droppableId];
     const destinationDay = allDaysCurrentWeek[destination.droppableId];
-    const eventToMove = sourceDay.events[source.index];
+    const eventToMove = sourceDay.normalEvents[source.index];
     // replacing item in array is safe to mutate,
     // it won't change the original source
     allDaysCurrentWeek[source.droppableId] = {
       ...sourceDay,
-      events: removeDraggedEvent(sourceDay, source),
+      normalEvents: removeDraggedEvent(sourceDay, source),
     };
     allDaysCurrentWeek[destination.droppableId] = {
       ...destinationDay,
-      events: addDroppedEvent(destinationDay, eventToMove, destination),
+      normalEvents: addDroppedEvent(destinationDay, eventToMove, destination),
     };
     updateEventDatesWeekView(eventToMove, destinationDay, editEventData);
     setWeekHours(allDaysCurrentWeek);
   };
 
-  const fillCalendarDays = (events, selectedWeek) => {
-    const result = [...selectedWeekDaysWithEvents(selectedWeek, events)];
+  const fillCalendarDays = (normalEvents, selectedWeek) => {
+    const result = [...selectedWeekDaysWithEvents(selectedWeek, normalEvents)];
     return result;
   };
 
@@ -88,12 +90,12 @@ const Week = ({
     firstAndLastDayOfTheWeek(new Date())
   );
   const [weekHours, setWeekHours] = useState(
-    fillCalendarDays(events, firstAndLastDayOfTheWeek(new Date()))
+    fillCalendarDays(normalEvents, firstAndLastDayOfTheWeek(new Date()))
   );
   const [eventsMatrixState, setEventsMatrixState] = useState(
     eventsMatrix(fullDayEvents)
   );
-  const hourEvents = events.filter((event) => event.startHour !== null);
+  const hourEvents = normalEvents.filter((event) => event.startHour !== null);
 
   const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_WEEK_VIEW.map(
     (dayOfTheWeek, i) => {
@@ -193,7 +195,7 @@ const Week = ({
   useEffect(() => {
     setWeekHours(
       fillCalendarDays(
-        events,
+        normalEvents,
         firstAndLastDayOfTheWeek(
           new Date(
             `${selectedWeek.startYear}/${selectedWeek.startMonth}/${selectedWeek.startDay}`
@@ -201,11 +203,11 @@ const Week = ({
         )
       )
     );
-  }, [events, selectedWeek]);
+  }, [normalEvents, selectedWeek]);
 
   useEffect(() => {
-    setEventsMatrixState(eventsMatrix(events));
-  }, [events]);
+    setEventsMatrixState(eventsMatrix(normalEvents));
+  }, [normalEvents]);
 
   return (
     <div>
