@@ -8,7 +8,6 @@ export const previousMonthDisabledDays = (
 ) => {
   let firstDayOfTheMonthDate = `${selectedMonthIndex + 1} 1 ${selectedYear}`;
   let firstDayOfTheMonthWeekIndex = new Date(firstDayOfTheMonthDate).getDay();
-  console.log({ selectedMonthIndex });
   const previousMonthDisabledDays = Array(
     firstDayOfTheMonthWeekIndex === 0 ? 6 : firstDayOfTheMonthWeekIndex - 1 // Sunday is 0 Saturday is 6
   )

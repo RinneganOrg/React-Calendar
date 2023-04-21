@@ -9,6 +9,10 @@ import { makeInterval } from "./makeInterval";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import moment from "moment";
 import eventsMatrix from "../month/eventsMatrix";
+import {
+  recursiveEventsInInterval,
+} from "../month/recursiveEventsInInterval";
+import { recursiveFunctions } from "../month/recursiveFunctions";
 
 const Week = ({
   viewNames,
@@ -16,14 +20,45 @@ const Week = ({
   ModalPopUp,
   handleEdit,
   normalEvents = [],
-  events = [],
+  recursiveEvents = [],
   fetchEventsByInterval,
   editEventData,
   handleOpenModal,
   makeDefaultEvent,
 }) => {
-  const fullDayEvents = normalEvents.filter((event) => event.startHour === null);
-  console.log({fullDayEvents})
+  const [allEvents, setAllEvents] = useState([]);
+  useEffect(() => {
+    const selectedInterval = makeInterval(
+      new Date(firstDayOfCurrentWeek).getFullYear(),
+      new Date(firstDayOfCurrentWeek).getMonth(),
+      new Date(firstDayOfCurrentWeek).getDate(),
+      new Date(lastDayOfCurrentWeek).getFullYear(),
+      new Date(lastDayOfCurrentWeek).getMonth(),
+      new Date(lastDayOfCurrentWeek).getDate()
+    );
+    const relevantRecursiveEvents = recursiveEvents.filter((event) =>
+      recursiveEventsInInterval(event, selectedInterval)
+    );
+
+    const allRecursiveEvents = relevantRecursiveEvents.reduce(
+      (acc, currentEvent) => {
+        return [
+          ...acc,
+          ...recursiveFunctions[currentEvent.recursive](
+            currentEvent,
+            selectedInterval
+          ),
+        ];
+      },
+      []
+    );
+
+    setAllEvents([...normalEvents, ...allRecursiveEvents]);
+  }, [normalEvents, recursiveEvents]);
+
+  const fullDayEvents = allEvents.filter(
+    (event) => event.startHour === null
+  );
   const updateEventDatesWeekView = (
     eventToMove,
     destinationDay,
@@ -66,23 +101,23 @@ const Week = ({
     const allDaysCurrentWeek = weekHours.slice();
     const sourceDay = allDaysCurrentWeek[source.droppableId];
     const destinationDay = allDaysCurrentWeek[destination.droppableId];
-    const eventToMove = sourceDay.normalEvents[source.index];
+    const eventToMove = sourceDay.events[source.index];
     // replacing item in array is safe to mutate,
     // it won't change the original source
     allDaysCurrentWeek[source.droppableId] = {
       ...sourceDay,
-      normalEvents: removeDraggedEvent(sourceDay, source),
+      events: removeDraggedEvent(sourceDay, source),
     };
     allDaysCurrentWeek[destination.droppableId] = {
       ...destinationDay,
-      normalEvents: addDroppedEvent(destinationDay, eventToMove, destination),
+      events: addDroppedEvent(destinationDay, eventToMove, destination),
     };
     updateEventDatesWeekView(eventToMove, destinationDay, editEventData);
     setWeekHours(allDaysCurrentWeek);
   };
 
-  const fillCalendarDays = (normalEvents, selectedWeek) => {
-    const result = [...selectedWeekDaysWithEvents(selectedWeek, normalEvents)];
+  const fillCalendarDays = (allEvents, selectedWeek) => {
+    const result = [...selectedWeekDaysWithEvents(selectedWeek, allEvents)];
     return result;
   };
 
@@ -90,12 +125,12 @@ const Week = ({
     firstAndLastDayOfTheWeek(new Date())
   );
   const [weekHours, setWeekHours] = useState(
-    fillCalendarDays(normalEvents, firstAndLastDayOfTheWeek(new Date()))
+    fillCalendarDays(allEvents, firstAndLastDayOfTheWeek(new Date()))
   );
   const [eventsMatrixState, setEventsMatrixState] = useState(
     eventsMatrix(fullDayEvents)
   );
-  const hourEvents = normalEvents.filter((event) => event.startHour !== null);
+  const hourEvents = allEvents.filter((event) => event.startHour !== null);
 
   const daysOfTheWeekIndicators = DAYS_OF_THE_WEEK_WEEK_VIEW.map(
     (dayOfTheWeek, i) => {
@@ -195,7 +230,7 @@ const Week = ({
   useEffect(() => {
     setWeekHours(
       fillCalendarDays(
-        normalEvents,
+        allEvents,
         firstAndLastDayOfTheWeek(
           new Date(
             `${selectedWeek.startYear}/${selectedWeek.startMonth}/${selectedWeek.startDay}`
@@ -203,11 +238,11 @@ const Week = ({
         )
       )
     );
-  }, [normalEvents, selectedWeek]);
+  }, [allEvents, selectedWeek]);
 
   useEffect(() => {
-    setEventsMatrixState(eventsMatrix(normalEvents));
-  }, [normalEvents]);
+    setEventsMatrixState(eventsMatrix(allEvents));
+  }, [allEvents]);
 
   return (
     <div>

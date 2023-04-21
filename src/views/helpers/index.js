@@ -15,10 +15,18 @@ export const eventStyle = (event) => {
 
 //remove dragged event from source
 export const removeDraggedEvent = (sourceDay, source) => {
+  // if (sourceDay.events[source.index].recursive !== "no") {
+  //   sourceDay.events[source.index]["endDateRecursive"] = moment([
+  //     sourceDay.year,
+  //     sourceDay.month - 1,
+  //     sourceDay.dayNumber,
+  //   ]).format("YYYY-MM-DD");
+  // }
   return [
-    ...sourceDay.events.slice(0, source.index),
-    ...sourceDay.events.slice(source.index + 1),
-  ];
+        ...sourceDay.events.slice(0, source.index),
+        ...sourceDay.events.slice(source.index + 1),
+      ]
+    ;
 };
 
 // add dropped event to destination at desired position

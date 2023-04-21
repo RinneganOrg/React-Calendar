@@ -84,101 +84,99 @@ const Day = ({
       : "triangle-left-past";
   };
 
-  const eventsList =
-    !eventsMatrix[date]
-      ? []
-      : Array(highestIndex() + 1)
-          .fill(0)
-          .map((_, index) => {
-            const indexEvent = dayOfTheMonth?.events
-              .map((event) => event.id)
-              .indexOf(eventsMatrix[date]?.[index]?.id);
-            return indexEvent > -1 ? (
-              <Draggable
-                key={`key-${index}`}
-                draggableId={`day-${eventsMatrix[date][index].id}`}
-                index={indexEvent}
-              >
-                {(provided) => (
-                  <section
-                    key={`key-ev-${index}`}
-                    onClick={() => {
-                      handleEdit(eventsMatrix[date][index].id, eventsMatrix[date][index]?.recursive);
-                    }}
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                  >
-                    {eventExtendsOnMonday(eventsMatrix[date][index]) ? (
+  const eventsList = !eventsMatrix[date]
+    ? []
+    : Array(highestIndex() + 1)
+        .fill(0)
+        .map((_, index) => {
+          const indexEvent = dayOfTheMonth?.events
+            .map((event) => event.id)
+            .indexOf(eventsMatrix[date]?.[index]?.id);
+          return indexEvent > -1 ? (
+            <Draggable
+              key={`key-${index}`}
+              draggableId={`day-${eventsMatrix[date][index].id}-${date}`}
+              index={indexEvent}
+            >
+              {(provided) => (
+                <section
+                  key={`key-ev-${index}`}
+                  onClick={() => {
+                    handleEdit(
+                      eventsMatrix[date][index].id,
+                      eventsMatrix[date][index]?.recursive
+                    );
+                  }}
+                  ref={provided.innerRef}
+                  {...provided.draggableProps}
+                  {...provided.dragHandleProps}
+                >
+                  {eventExtendsOnMonday(eventsMatrix[date][index]) ? (
+                    <div
+                      key={`key-div-${index}`}
+                      className="line-up"
+                      style={{
+                        width: `${makeEventWidth(eventsMatrix[date][index])}%`,
+                      }}
+                    >
                       <div
-                        key={`key-div-${index}`}
-                        className="line-up"
-                        style={{
-                          width: `${makeEventWidth(
-                            eventsMatrix[date][index]
-                          )}%`,
-                        }}
-                      >
-                        <div
-                          className={eventStyle(eventsMatrix[date][index])}
-                          style={{
-                            width: `${makeEventWidth(
-                              eventsMatrix[date][index]
-                            )}%`,
-                            borderTopRightRadius: "0px",
-                            borderBottomRightRadius: "0px",
-                          }}
-                        >
-                          {displayEvents(eventsMatrix[date][index], indexEvent)}
-                        </div>
-                        <div
-                          className={isEventActiveRight(
-                            eventsMatrix[date][index]
-                          )}
-                        ></div>
-                      </div>
-                    ) : (
-                      <div
-                        key={`key-div-${index}`}
                         className={eventStyle(eventsMatrix[date][index])}
                         style={{
                           width: `${makeEventWidth(
                             eventsMatrix[date][index]
                           )}%`,
+                          borderTopRightRadius: "0px",
+                          borderBottomRightRadius: "0px",
                         }}
                       >
                         {displayEvents(eventsMatrix[date][index], indexEvent)}
                       </div>
-                    )}
-                  </section>
-                )}
-              </Draggable>
-            ) : isEventFromPreviousDayOnSunday(index) ? (
+                      <div
+                        className={isEventActiveRight(
+                          eventsMatrix[date][index]
+                        )}
+                      ></div>
+                    </div>
+                  ) : (
+                    <div
+                      key={`key-div-${index}`}
+                      className={eventStyle(eventsMatrix[date][index])}
+                      style={{
+                        width: `${makeEventWidth(eventsMatrix[date][index])}%`,
+                      }}
+                    >
+                      {displayEvents(eventsMatrix[date][index], indexEvent)}
+                    </div>
+                  )}
+                </section>
+              )}
+            </Draggable>
+          ) : isEventFromPreviousDayOnSunday(index) ? (
+            <div
+              className="line-up"
+              style={{
+                width: `${makeEventWidth(eventsMatrix[date][index])}%`,
+              }}
+              key={`key-div-${index}`}
+            >
               <div
-                className="line-up"
+                className={isEventActiveLeft(eventsMatrix[date][index])}
+              ></div>
+              <section
+                className={eventStyle(eventsMatrix[date][index])}
                 style={{
                   width: `${makeEventWidth(eventsMatrix[date][index])}%`,
+                  borderTopLeftRadius: "0px",
+                  borderBottomLeftRadius: "0px",
                 }}
-                key={`key-div-${index}`}
               >
-                <div
-                  className={isEventActiveLeft(eventsMatrix[date][index])}
-                ></div>
-                <section
-                  className={eventStyle(eventsMatrix[date][index])}
-                  style={{
-                    width: `${makeEventWidth(eventsMatrix[date][index])}%`,
-                    borderTopLeftRadius: "0px",
-                    borderBottomLeftRadius: "0px",
-                  }}
-                >
-                  {eventsMatrix[date][index].title}
-                </section>
-              </div>
-            ) : (
-              <section key={`key-${index}`} className="empty-cell"></section>
-            );
-          });
+                {eventsMatrix[date][index].title}
+              </section>
+            </div>
+          ) : (
+            <section key={`key-${index}`} className="empty-cell"></section>
+          );
+        });
 
   const displayDay = (dayOfTheMonth) => {
     return dayOfTheMonth.year === new Date().getFullYear() &&

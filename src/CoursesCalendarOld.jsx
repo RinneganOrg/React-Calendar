@@ -653,7 +653,6 @@ const CoursesCalendar = ({
     const sourceDay = allDaysCurrentMonth[source.droppableId];
     const destinationDay = allDaysCurrentMonth[destination.droppableId];
     const eventToMove = sourceDay.events[source.index];
-    console.log({ source, destination });
     // replacing item in array is safe to mutate,
     // it won't change the original source
     allDaysCurrentMonth[source.droppableId] = {
@@ -676,7 +675,6 @@ const CoursesCalendar = ({
     if (!destination || destination?.droppableId === source?.droppableId) {
       return;
     }
-    console.log({ source, destination });
     // make copy to make it safe to mutate, the source won't be changed
     const allDaysCurrentWeek = daysOfTheMonth.slice();
     const sourceDay = allDaysCurrentWeek[source.droppableId];
