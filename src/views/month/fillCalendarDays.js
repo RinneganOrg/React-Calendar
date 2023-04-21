@@ -4,7 +4,13 @@ import { selectedMonthDaysWithEvents } from "./selectedMonthDaysWithEvents";
 import { MONTHS } from "../../constants";
 
 export const fillCalendarDays = (selectedMonthIndex, events, selectedYear) => {
-  const selectedMonthItem = MONTHS[selectedMonthIndex];
+  // check leap year
+  const selectedMonthItem =
+    selectedMonthIndex === 1
+      ? selectedYear % 4 === 0
+        ? { key: 1, daysInMonth: 29, value: 2, text: "February" }
+        : { key: 1, daysInMonth: 28, value: 2, text: "February" }
+      : MONTHS[selectedMonthIndex];
   const result = [
     ...previousMonthDisabledDays(selectedMonthIndex, selectedYear, events),
     ...selectedMonthDaysWithEvents(

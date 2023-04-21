@@ -10,8 +10,8 @@ import moment from "moment";
 export const makeEventsForDay = (year, month, dayNumber, events) =>
   events.filter((event) => {
     return (
-      moment(event.startDate).date() === dayNumber &&
-      moment(event.startDate).month() + 1 === month &&
-      moment(event.startDate).year() === year
+      (moment(event.startDate).date() === dayNumber &&
+        moment(event.startDate).month() + 1 === month &&
+        moment(event.startDate).year() === year)
     );
   });

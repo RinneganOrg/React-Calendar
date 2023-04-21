@@ -71,7 +71,7 @@ const Hour = ({
                 <section
                   key={`key-ev-${index}`}
                   onClick={() => {
-                    handleEdit(eventsMatrix[date][index].id);
+                    handleEdit(eventsMatrix[date][index].id, eventsMatrix[date][index]?.recursive);
                   }}
                   ref={provided.innerRef}
                   {...provided.draggableProps}
@@ -117,7 +117,7 @@ const Hour = ({
                 <section
                   key={`key-ev-${index}`}
                   onClick={() => {
-                    handleEdit(weekEventsMatrix[date][index].id);
+                    handleEdit(weekEventsMatrix[date][index].id, weekEventsMatrix[date][index].recursive);
                   }}
                   ref={provided.innerRef}
                   {...provided.draggableProps}

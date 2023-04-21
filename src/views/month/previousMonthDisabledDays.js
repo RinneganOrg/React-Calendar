@@ -13,8 +13,15 @@ export const previousMonthDisabledDays = (
   )
     .fill(0)
     .map((_, index) => {
+      // check leap year
       const previousMonth =
-        selectedMonthIndex > 0 ? MONTHS[selectedMonthIndex - 1] : MONTHS[11]; // if current month is Jan previous month is Dec
+        selectedMonthIndex > 0 && selectedMonthIndex !== 2
+          ? MONTHS[selectedMonthIndex - 1]
+          : selectedMonthIndex === 2
+          ? selectedYear % 4 === 0
+            ? { key: 1, daysInMonth: 29, value: 2, text: "February" }
+            : { key: 1, daysInMonth: 28, value: 2, text: "February" }
+          : MONTHS[11]; // if current month is Jan previous month is Dec
 
       const year = selectedMonthIndex > 0 ? selectedYear : selectedYear - 1;
       const month = selectedMonthIndex > 0 ? selectedMonthIndex : 12;

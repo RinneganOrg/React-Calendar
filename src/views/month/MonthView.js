@@ -9,24 +9,59 @@ import moment from "moment";
 import { removeDraggedEvent, addDroppedEvent } from "../helpers";
 import { makeInterval } from "../week/makeInterval";
 import eventsMatrix from "./eventsMatrix";
-
+import { recursiveEventsInInterval } from "./recursiveEventsInInterval";
+import { recursiveFunctions } from "./recursiveFunctions";
 const Month = ({
   viewNames,
   setSelectedView,
   ModalPopUp,
   handleEdit,
-  events,
+  normalEvents,
+  recursiveEvents,
   fetchEventsByInterval,
   editEventData,
   handleOpenModal,
   makeDefaultEvent,
 }) => {
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setCurrentMonth] = useState(
+    MONTHS[new Date().getMonth()]
+  );
+  const [allEvents, setAllEvents] = useState([]);
+
+  useEffect(() => {
+    const selectedInterval = makeIntervalToFetchMonthEvents(
+      selectedMonth,
+      selectedYear,
+      allEvents
+    );
+
+    const relevantRecursiveEvents = recursiveEvents.filter((event) =>
+      recursiveEventsInInterval(event, selectedInterval)
+    );
+
+    const allRecursiveEvents = relevantRecursiveEvents.reduce(
+      (acc, currentEvent) => {
+        return [
+          ...acc,
+          ...recursiveFunctions[currentEvent.recursive](
+            currentEvent,
+            selectedInterval
+          ),
+        ];
+      },
+      []
+    );
+
+    setAllEvents([...normalEvents, ...allRecursiveEvents]);
+  }, [normalEvents, recursiveEvents]);
+
   const updateEventDatesMonthView = (
     eventToMove,
     destinationDay,
     editEventData
   ) => {
-    const { id, title, startHour, endHour } = eventToMove;
+    const { id, title, startHour, endHour, recursive } = eventToMove;
     const daysDiff =
       new Date(eventToMove.endDate).getTime() -
       new Date(eventToMove.startDate).getTime();
@@ -38,7 +73,15 @@ const Month = ({
     const endDate = moment(new Date(startDate).getTime() + daysDiff).format(
       "YYYY-MM-DD"
     );
-    return editEventData({ id, title, startDate, endDate, startHour, endHour });
+    return editEventData({
+      id,
+      title,
+      startDate,
+      endDate,
+      startHour,
+      endHour,
+      recursive,
+    });
   };
 
   /**
@@ -75,7 +118,7 @@ const Month = ({
     };
     allDaysCurrentMonth[destination.droppableId] = {
       ...destinationDay,
-      events: addDroppedEvent(destinationDay, eventToMove, destination),
+      events: addDroppedEvent(destinationDay, eventToMove, destination, allEvents),
     };
     updateEventDatesMonthView(eventToMove, destinationDay, editEventData);
     setDaysOfTheMonth(allDaysCurrentMonth);
@@ -89,15 +132,11 @@ const Month = ({
     )
   );
 
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setCurrentMonth] = useState(
-    MONTHS[new Date().getMonth()]
-  );
   const [daysOfTheMonth, setDaysOfTheMonth] = useState(
-    fillCalendarDays(new Date().getMonth(), events, selectedYear)
+    fillCalendarDays(new Date().getMonth(), allEvents, selectedYear)
   );
   const [eventsMatrixState, setEventsMatrixState] = useState(
-    eventsMatrix(events)
+    eventsMatrix(allEvents)
   );
   const setNextYear = () => {
     const year = selectedYear + 1;
@@ -112,9 +151,10 @@ const Month = ({
   const onChangeMonth = (monthSelection, year) => {
     setCurrentMonth(monthSelection);
     fetchEventsByInterval(
-      makeIntervalToFetchMonthEvents(monthSelection, year, events)
+      makeIntervalToFetchMonthEvents(monthSelection, year, [])
     );
   };
+
   const handleChangePreviousMonth = () => {
     selectedMonth.key > 0
       ? onChangeMonth(MONTHS[selectedMonth.key - 1], selectedYear)
@@ -155,19 +195,19 @@ const Month = ({
 
   useEffect(() => {
     fetchEventsByInterval(
-      makeIntervalToFetchMonthEvents(selectedMonth, selectedYear, events)
+      makeIntervalToFetchMonthEvents(selectedMonth, selectedYear, [])
     );
   }, []);
 
   useEffect(() => {
     setDaysOfTheMonth(
-      fillCalendarDays(selectedMonth.key, events, selectedYear)
+      fillCalendarDays(selectedMonth.key, allEvents, selectedYear)
     );
-  }, [events, selectedMonth.key, selectedYear]);
+  }, [allEvents, selectedMonth.key, selectedYear]);
 
   useEffect(() => {
-    setEventsMatrixState(eventsMatrix(events));
-  }, [events]);
+    setEventsMatrixState(eventsMatrix(allEvents));
+  }, [allEvents]);
 
   return (
     <div>
@@ -188,7 +228,7 @@ const Month = ({
                 daysOfTheMonth,
                 handleCreate,
                 handleEdit,
-                eventsMatrix: eventsMatrix(events),
+                eventsMatrix: eventsMatrixState,
               }}
             />
           </div>

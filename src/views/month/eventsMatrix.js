@@ -124,7 +124,7 @@ const nextFreeIndex = (startEndDateDiff, eventsMatrixDay, eventStartDate) => {
   return freeIndex;
 };
 
-export default function eventsMatrix(events) {
+export default function eventsMatrix(events, interval) {
   return events.reduce((acc, currentEvent) => {
     const startEndDateDiff =
       (new Date(currentEvent.endDate).getTime() -
